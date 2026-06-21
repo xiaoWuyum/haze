@@ -1,0 +1,6 @@
+{
+  "name": "觅境",
+  "description": "为每首歌，找到它的空间。一个融合和弦原声音乐、程序画幅微动动画和七重自然原生态白噪音的放松放松冥想混音播放器。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
