@@ -20,6 +20,9 @@ export class AudioEngine {
   private static songVolume = 60; // 0 - 100
   private static songGain: GainNode | null = null;
   private static activeSongId: string | null = null;
+  private static audioElement: HTMLAudioElement | null = null;
+  private static audioElementSource: MediaElementAudioSourceNode | null = null;
+  private static usingAudioFile = false;
   
   // Callback for beat synchronization (for UI visualizers)
   public static onBeatCallback: ((step: number, freqData: number[]) => void) | null = null;
@@ -607,16 +610,50 @@ export class AudioEngine {
     return 440 * Math.pow(2, difference / 12);
   }
 
+  private static async tryPlayAudioFile(audioUrl?: string): Promise<boolean> {
+    if (!audioUrl || !this.ctx || !this.songGain) return false;
+
+    if (!this.audioElement) {
+      this.audioElement = new Audio();
+      this.audioElement.loop = true;
+      this.audioElement.preload = 'auto';
+      this.audioElement.crossOrigin = 'anonymous';
+      this.audioElementSource = this.ctx.createMediaElementSource(this.audioElement);
+      this.audioElementSource.connect(this.songGain);
+    }
+
+    this.audioElement.pause();
+    this.audioElement.currentTime = 0;
+    this.audioElement.src = audioUrl;
+    this.audioElement.volume = 1;
+
+    try {
+      await this.audioElement.play();
+      this.usingAudioFile = true;
+      return true;
+    } catch (error) {
+      console.warn(`Unable to play audio file ${audioUrl}; falling back to synth playback.`, error);
+      this.audioElement.pause();
+      this.usingAudioFile = false;
+      return false;
+    }
+  }
+
   // Trigger synthesized song notes
-  public static playSong(songId: string) {
-    this.checkContext();
+  public static async playSong(songId: string, audioUrl?: string) {
+    await this.checkContext();
     this.stopActiveSong();
     
     this.activeSongId = songId;
     this.currentStep = 0;
     this.isSongPlaying = true;
+
+    if (await this.tryPlayAudioFile(audioUrl)) {
+      return;
+    }
     
-    this.bpm = songId === 'putong' || songId === 'melody' ? 84 : 70; // Set appropriate tempo
+    const fallbackSongId = this.CHORDS[songId] ? songId : 'putong';
+    this.bpm = fallbackSongId === 'putong' || fallbackSongId === 'melody' ? 84 : 70; // Set appropriate tempo
 
     const stepDurationMs = (60 / this.bpm) / 4 * 1000; // 16th steps
 
@@ -630,7 +667,7 @@ export class AudioEngine {
       
       // Determine what chord to play (every 16 steps/1 bar represents 1 chord)
       const barIdx = Math.floor(stepIdx / 16);
-      const chordsAvailable = this.CHORDS[songId] || [];
+      const chordsAvailable = this.CHORDS[fallbackSongId] || [];
       const currentChord = chordsAvailable[barIdx % chordsAvailable.length];
       
       // Every 1 bar, play a soft Rhodes chord
@@ -655,10 +692,10 @@ export class AudioEngine {
       }
 
       // Check for lead melody note
-      const melodyAvailable = this.MELODIES[songId] || {};
+      const melodyAvailable = this.MELODIES[fallbackSongId] || {};
       const melodyNote = melodyAvailable[stepIdx];
       if (melodyNote) {
-        const instrument = (songId === 'season') ? 'guitar' : 'rhodes';
+        const instrument = (fallbackSongId === 'season') ? 'guitar' : 'rhodes';
         this.synthesizePianoLead(melodyNote, 0.28, 0.8, instrument);
       }
 
@@ -684,6 +721,11 @@ export class AudioEngine {
 
   public static stopActiveSong() {
     this.isSongPlaying = false;
+    this.usingAudioFile = false;
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.currentTime = 0;
+    }
     if (this.songIntervalId) {
       clearTimeout(this.songIntervalId);
       this.songIntervalId = null;

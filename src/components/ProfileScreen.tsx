@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Space, Song, HistoryRecord, UserStats } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { motion } from 'motion/react';
+import { readJson, readNumber, writeJson } from '../utils/storage';
 
 interface ProfileScreenProps {
   spaces: Space[];
@@ -34,16 +35,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // Load state from localStorage on load
   useEffect(() => {
     // 1. Favorites
-    const faveIds: string[] = JSON.parse(localStorage.getItem('saved_space_favorites') || '[]');
+    const faveIds = readJson<string[]>('saved_space_favorites', []);
     const matchingFaves = spaces.filter(s => faveIds.includes(s.id));
     setFavorites(matchingFaves);
 
     // 2. Play History
-    const storedHistory: HistoryRecord[] = JSON.parse(localStorage.getItem('saved_play_history') || '[]');
+    const storedHistory = readJson<HistoryRecord[]>('saved_play_history', []);
     setHistory(storedHistory.reverse().slice(0, 10)); // reverse for latest first, limit 10
 
     // 3. Stats calculation
-    const listeningSecs = parseInt(localStorage.getItem('user_listening_seconds') || '0');
+    const listeningSecs = readNumber('user_listening_seconds', 0);
     const listeningMins = Math.max(44, Math.floor(listeningSecs / 60)); // fallback minimum test minutes
     
     const customCount = spaces.filter(s => s.id.startsWith('custom_')).length;
@@ -57,9 +58,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const handleRemoveFavorite = (e: React.MouseEvent, spaceId: string) => {
     e.stopPropagation();
-    const faveIds: string[] = JSON.parse(localStorage.getItem('saved_space_favorites') || '[]');
+    const faveIds = readJson<string[]>('saved_space_favorites', []);
     const updated = faveIds.filter(id => id !== spaceId);
-    localStorage.setItem('saved_space_favorites', JSON.stringify(updated));
+    writeJson('saved_space_favorites', updated);
     setFavorites(prev => prev.filter(s => s.id !== spaceId));
   };
 

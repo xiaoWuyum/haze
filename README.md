@@ -1,20 +1,52 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+﻿# Drift
 
-# Run and deploy your AI Studio app
+A Vite + React + TypeScript ambient music prototype.
 
-This contains everything you need to run your app locally.
+## Prerequisites
 
-View your app in AI Studio: https://ai.studio/apps/2f9ee99d-453a-4f72-8dd1-ba14b6c8c4a2
+- Node.js 20 or newer
+- npm
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+```powershell
+npm install
+npm run dev
+```
 
+Open the local Vite URL:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```text
+http://localhost:3000/
+```
+
+## Useful Scripts
+
+```powershell
+npm run lint
+npm run build
+npm run preview
+npm run clean
+```
+
+## Notes
+
+The app currently runs fully in the browser. Favorites, play history, listening time, and custom spaces are stored in `localStorage`.
+
+The `.env.example` file is inherited from the AI Studio export. The current source does not call Gemini APIs, so `GEMINI_API_KEY` is not required for local development.
+
+## Local Music Files
+
+The current player uses these MP3 files from `public/audio`:
+
+```text
+public/audio/How+Sweet+-+NewJeans.mp3
+public/audio/kendrick+lamar-not+like+us.mp3
+public/audio/michael jackson-billie jean.mp3
+public/audio/方大同-红豆.mp3
+public/audio/陈粒-+小半.mp3
+public/audio/陶喆+-+飞机场的10.30.mp3
+public/audio/陶喆-普通朋友.mp3
+```
+
+Keep these filenames unchanged unless you also update `src/data.ts`.

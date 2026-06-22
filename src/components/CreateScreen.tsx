@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -120,38 +120,38 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
           bgId = 'cyberpunk';
           tag = '赛博 · 夜';
           matchedPrompt = 'Cyberpunk Tokyo cityscape, ultra-high floor apartment interior, floor-to-ceiling windows, rain streaking down glass, neon reflections, cinematic depth of field, blue-purple color grade, ambient motion only, 8k resolution, seamless looping background.';
-          defaultSong = songs.find(s => s.id === 'putong')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'ordinary_friends')?.id || songs[0].id;
           activeSounds = { rain: 60, static: 45 };
         } else if (text.includes('雨') || text.includes('林') || text.includes('树') || text.includes('绿') || text.includes('森林') || text.includes('自然')) {
           bgId = 'rainforest';
           tag = '幽静 · 静';
           matchedPrompt = 'Lush magical emerald rain forest at dawn, rain filtering through dense wet canopy, soft mist arising from mossy rocks, extremely healing visual, camera fixed slow visual sway, highly detailed realistic loop.';
-          defaultSong = songs.find(s => s.id === 'jimodejijie')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'xiaoban')?.id || songs[0].id;
           activeSounds = { rain: 80, wind: 30 };
         } else if (text.includes('银河') || text.includes('宇') || text.includes('星') || text.includes('暗') || text.includes('太空') || text.includes('科幻')) {
           bgId = 'space';
           tag = '冥想 · 深';
           matchedPrompt = 'Panoramic majestic view of spiral stellar galaxy from a quiet observation viewport, shimmering stars, cosmic dust gas swirling slowly, high-fidelity dark cosmic space travel mood, seamless drift loop.';
-          defaultSong = songs.find(s => s.id === 'shatan')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'how_sweet')?.id || songs[0].id;
           activeSounds = { space: 70, static: 25 };
         } else if (text.includes('海') || text.includes('浪') || text.includes('沙滩') || text.includes('椰') || text.includes('岛') || text.includes('晴')) {
           bgId = 'beach';
           tag = '治愈 · 海';
           matchedPrompt = 'Cozy coastal sun lounger under palm shadows, azure ocean waves washing onto clean white warm sand, gentle tropical sunset sky, slow-motion loop of realistic dynamic marine horizon.';
-          defaultSong = songs.find(s => s.id === 'melody')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'hongdou')?.id || songs[0].id;
           activeSounds = { waves: 75, wind: 35 };
         } else if (text.includes('雪') || text.includes('冬') || text.includes('寒') || text.includes('冰') || text.includes('冷')) {
           bgId = 'snowpeak';
           tag = '治愈 · 寒';
           matchedPrompt = 'Spectacular snow-covered pine ridge peaks at dusk, warm flickering canvas tents with gold cozy ambient fire light glowing inside, faint smoke rising, pristine cold air environment, slow realistic loop.';
-          defaultSong = songs.find(s => s.id === 'jimodejijie')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'xiaoban')?.id || songs[0].id;
           activeSounds = { fire: 65, wind: 55 };
         } else {
           // Default: Cabin
           bgId = 'cabin';
           tag = '治愈 · 暖';
           matchedPrompt = 'Quiet mountainside timber lodge interior, glowing brick fireplace logs crackling gently, warm golden volumetric light streaming, steaming herbal tea cup on wood table window sill, heavy rain outside.';
-          defaultSong = songs.find(s => s.id === 'aihenjiandan')?.id || songs[0].id;
+          defaultSong = songs.find(s => s.id === 'airport_1030')?.id || songs[0].id;
           activeSounds = { fire: 70, crickets: 45, rain: 40 };
         }
 
@@ -490,3 +490,4 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     </div>
   );
 };
+
