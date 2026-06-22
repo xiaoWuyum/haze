@@ -15,6 +15,7 @@ interface PlazaScreenProps {
   isPlaying: boolean;
   onSelectSpace: (space: Space) => void;
   onTogglePlay: () => void;
+  onNextSong: () => void;
   onOpenPlayer: () => void;
 }
 
@@ -25,6 +26,7 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
   isPlaying,
   onSelectSpace,
   onTogglePlay,
+  onNextSong,
   onOpenPlayer,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -310,17 +312,31 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
               </div>
             </div>
 
-            {/* Quick Play/Pause button */}
-            <button 
-              id="btn_play_trigger"
-              onClick={(e) => {
-                e.stopPropagation(); // prevent opening the full player
-                onTogglePlay();
-              }}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white shrink-0 hover:scale-105 active:scale-95 transition-all text-sm shadow-md"
-            >
-              <LucideIcon name={isPlaying ? 'Pause' : 'Play'} size={15} />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Quick Play/Pause button */}
+              <button 
+                id="btn_play_trigger"
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent opening the full player
+                  onTogglePlay();
+                }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all text-sm shadow-md"
+                title={isPlaying ? '暂停' : '继续播放'}
+              >
+                <LucideIcon name={isPlaying ? 'Pause' : 'Play'} size={15} />
+              </button>
+              <button
+                id="btn_next_trigger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNextSong();
+                }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-white/10 text-white hover:scale-105 active:scale-95 transition-all text-sm shadow-md"
+                title="下一首"
+              >
+                <LucideIcon name="SkipForward" size={15} />
+              </button>
+            </div>
           </motion.div>
         </div>
       )}

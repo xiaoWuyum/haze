@@ -143,7 +143,7 @@ export default function App() {
 
     if (isPlaying) {
       // Pause
-      AudioEngine.stopActiveSong();
+      AudioEngine.pauseActiveSong();
       // stop all active ambient synths
       ambientList.forEach(async (sound) => {
         if (sound.isPlaying) {
@@ -155,7 +155,7 @@ export default function App() {
       // Play
       setIsPlaying(true);
       const activeSong = SONGS.find(s => s.id === activeSongId);
-      AudioEngine.playSong(activeSongId, activeSong?.audioUrl);
+      AudioEngine.playSong(activeSongId, activeSong?.audioUrl, { restart: false });
       // turn on active synthe elements
       ambientList.forEach(async (sound) => {
         if (sound.isPlaying) {
@@ -211,6 +211,15 @@ export default function App() {
     }
   };
 
+  const handleNextSong = () => {
+    const currentIdx = SONGS.findIndex(song => song.id === activeSongId);
+    const nextSong = SONGS[(currentIdx + 1 + SONGS.length) % SONGS.length];
+    setActiveSongId(nextSong.id);
+    if (isPlaying) {
+      AudioEngine.playSong(nextSong.id, nextSong.audioUrl);
+    }
+  };
+
   // Creation callback
   const handleCreateSpace = (newSpace: Space) => {
     const currentList = readJson<Space[]>('custom_created_spaces', []);
@@ -263,6 +272,7 @@ export default function App() {
               isPlaying={isPlaying}
               onSelectSpace={selectSpaceAction}
               onTogglePlay={handleTogglePlay}
+              onNextSong={handleNextSong}
               onOpenPlayer={() => setActiveTab('play')}
             />
           )}

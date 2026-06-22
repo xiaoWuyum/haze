@@ -25,6 +25,7 @@ export class AudioEngine {
   private static audioElement: HTMLAudioElement | null = null;
   private static audioElementSource: MediaElementAudioSourceNode | null = null;
   private static usingAudioFile = false;
+  private static activeAudioUrl: string | null = null;
   
   // Callback for beat synchronization (for UI visualizers)
   public static onBeatCallback: ((step: number, freqData: number[]) => void) | null = null;
@@ -652,7 +653,7 @@ export class AudioEngine {
     return 440 * Math.pow(2, difference / 12);
   }
 
-  private static async tryPlayAudioFile(audioUrl?: string): Promise<boolean> {
+  private static async tryPlayAudioFile(audioUrl?: string, restart = true): Promise<boolean> {
     if (!audioUrl || !this.ctx || !this.songGain) return false;
 
     if (!this.audioElement) {
@@ -664,9 +665,17 @@ export class AudioEngine {
       this.audioElementSource.connect(this.songGain);
     }
 
+    const nextSrc = new URL(audioUrl, window.location.href).href;
+    const sameTrack = this.activeAudioUrl === audioUrl && this.audioElement.src === nextSrc;
+
     this.audioElement.pause();
-    this.audioElement.currentTime = 0;
-    this.audioElement.src = audioUrl;
+    if (!sameTrack) {
+      this.audioElement.src = audioUrl;
+      this.activeAudioUrl = audioUrl;
+    }
+    if (restart || !sameTrack) {
+      this.audioElement.currentTime = 0;
+    }
     this.audioElement.volume = 1;
 
     try {
@@ -682,15 +691,24 @@ export class AudioEngine {
   }
 
   // Trigger synthesized song notes
-  public static async playSong(songId: string, audioUrl?: string) {
+  public static async playSong(songId: string, audioUrl?: string, options: { restart?: boolean } = {}) {
     await this.checkContext();
-    this.stopActiveSong();
+    const restart = options.restart ?? true;
+    const sameSong = this.activeSongId === songId;
+    if (restart || !sameSong) {
+      this.stopActiveSong();
+    } else if (this.songIntervalId) {
+      clearTimeout(this.songIntervalId);
+      this.songIntervalId = null;
+    }
     
     this.activeSongId = songId;
-    this.currentStep = 0;
+    if (restart || !sameSong) {
+      this.currentStep = 0;
+    }
     this.isSongPlaying = true;
 
-    if (await this.tryPlayAudioFile(audioUrl)) {
+    if (await this.tryPlayAudioFile(audioUrl, restart || !sameSong)) {
       return;
     }
     
@@ -764,9 +782,22 @@ export class AudioEngine {
   public static stopActiveSong() {
     this.isSongPlaying = false;
     this.usingAudioFile = false;
+    this.activeAudioUrl = null;
     if (this.audioElement) {
       this.audioElement.pause();
       this.audioElement.currentTime = 0;
+    }
+    if (this.songIntervalId) {
+      clearTimeout(this.songIntervalId);
+      this.songIntervalId = null;
+    }
+  }
+
+  public static pauseActiveSong() {
+    this.isSongPlaying = false;
+    this.usingAudioFile = false;
+    if (this.audioElement) {
+      this.audioElement.pause();
     }
     if (this.songIntervalId) {
       clearTimeout(this.songIntervalId);
