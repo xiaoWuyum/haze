@@ -12,8 +12,11 @@ import { PlazaScreen } from './components/PlazaScreen';
 import { PlayScreen } from './components/PlayScreen';
 import { CreateScreen } from './components/CreateScreen';
 import { ProfileScreen } from './components/ProfileScreen';
+import { NowPlayingBanner } from './components/NowPlayingBanner';
+import { VideoGenerationToast } from './components/VideoGenerationToast';
 import { motion, AnimatePresence } from 'motion/react';
 import { readJson, readNumber, removeStoredValue, writeJson, writeNumber } from './utils/storage';
+import { getVideoGenerationJob, requestVideoGeneration, type VideoGenerationJob } from './utils/videoGenerationClient';
 
 type TabType = 'plaza' | 'play' | 'create' | 'profile';
 
@@ -28,6 +31,10 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [songVolume, setSongVolume] = useState<number>(60);
   const [ambientList, setAmbientList] = useState<AmbientSound[]>(AMBIENT_SOUNDS);
+  const [videoJob, setVideoJob] = useState<VideoGenerationJob | null>(null);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
+  const [videoError, setVideoError] = useState('');
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   
   // Analyser frequencies
   const [freqData, setFreqData] = useState<number[]>([]);
@@ -64,6 +71,38 @@ export default function App() {
     }, 1000);
     return () => clearInterval(statsInterval);
   }, [isPlaying]);
+
+  useEffect(() => {
+    if (!videoJob || videoJob.status === 'completed' || videoJob.status === 'failed') return;
+
+    const interval = window.setInterval(async () => {
+      try {
+        const nextJob = await getVideoGenerationJob(videoJob.jobId);
+        setVideoJob(nextJob);
+
+        if (nextJob.status === 'completed') {
+          setIsGeneratingVideo(false);
+          if (nextJob.videoUrl) {
+            setGeneratedVideoUrl(nextJob.videoUrl);
+            setVideoError('');
+          } else {
+            setVideoError('视频任务已完成，但没有返回 videoUrl。');
+          }
+        }
+
+        if (nextJob.status === 'failed') {
+          setIsGeneratingVideo(false);
+          setVideoError(nextJob.error || '视频生成失败。');
+        }
+      } catch (error) {
+        setIsGeneratingVideo(false);
+        setVideoError(error instanceof Error ? error.message : '无法读取视频生成状态。');
+        setVideoJob(prev => prev ? { ...prev, status: 'failed', error: '无法读取视频生成状态。' } : prev);
+      }
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [videoJob?.jobId, videoJob?.status]);
 
   // Handle atmosphere mixes when a space loads
   const syncSpaceAtmosphere = (space: Space) => {
@@ -220,6 +259,45 @@ export default function App() {
     }
   };
 
+  const handleGenerateVideo = async (prompt: string) => {
+    setIsGeneratingVideo(true);
+    setVideoError('');
+    setGeneratedVideoUrl('');
+
+    try {
+      const job = await requestVideoGeneration({ prompt });
+      setVideoJob(job);
+
+      if (job.status === 'completed' && job.videoUrl) {
+        setGeneratedVideoUrl(job.videoUrl);
+        setIsGeneratingVideo(false);
+        return;
+      }
+
+      if (job.status === 'failed') {
+        setVideoError(job.error || '视频生成失败。');
+        setIsGeneratingVideo(false);
+        return;
+      }
+    } catch (error) {
+      setIsGeneratingVideo(false);
+      setVideoError(error instanceof Error ? error.message : '视频生成请求失败。');
+      setVideoJob({
+        jobId: `failed_${Date.now()}`,
+        provider: 'api',
+        status: 'failed',
+        error: error instanceof Error ? error.message : '视频生成请求失败。',
+      });
+    }
+  };
+
+  const clearVideoGeneration = () => {
+    setVideoJob(null);
+    setGeneratedVideoUrl('');
+    setVideoError('');
+    setIsGeneratingVideo(false);
+  };
+
   // Creation callback
   const handleCreateSpace = (newSpace: Space) => {
     const currentList = readJson<Space[]>('custom_created_spaces', []);
@@ -268,12 +346,7 @@ export default function App() {
             <PlazaScreen
               spaces={spaces}
               mvs={mvs}
-              recentSong={SONGS.find(s => s.id === activeSongId) || SONGS[0]}
-              isPlaying={isPlaying}
               onSelectSpace={selectSpaceAction}
-              onTogglePlay={handleTogglePlay}
-              onNextSong={handleNextSong}
-              onOpenPlayer={() => setActiveTab('play')}
             />
           )}
 
@@ -295,13 +368,19 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'create' && (
+          <div className={activeTab === 'create' ? 'block' : 'hidden'}>
             <CreateScreen
               songs={SONGS}
               ambientSounds={AMBIENT_SOUNDS}
+              videoJob={videoJob}
+              generatedVideoUrl={generatedVideoUrl}
+              videoError={videoError}
+              isGeneratingVideo={isGeneratingVideo}
+              onGenerateVideo={handleGenerateVideo}
+              onClearVideoGeneration={clearVideoGeneration}
               onCreateSpace={handleCreateSpace}
             />
-          )}
+          </div>
 
           {activeTab === 'profile' && (
             <ProfileScreen
@@ -318,6 +397,22 @@ export default function App() {
 
         {/* Global Floating Bottom Navigation Bar aligned with screenshot exactly */}
         {activeTab !== 'play' && (
+          <>
+          <AnimatePresence>
+            {videoJob && activeTab !== 'create' && (
+              <VideoGenerationToast
+                job={videoJob}
+                onOpenCreate={() => setActiveTab('create')}
+              />
+            )}
+          </AnimatePresence>
+          <NowPlayingBanner
+            song={SONGS.find(s => s.id === activeSongId) || SONGS[0]}
+            isPlaying={isPlaying}
+            onOpenPlayer={() => setActiveTab('play')}
+            onTogglePlay={handleTogglePlay}
+            onNextSong={handleNextSong}
+          />
           <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 px-6 pb-6 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-4">
             <div 
               style={{ contentVisibility: 'auto' }}
@@ -389,6 +484,7 @@ export default function App() {
 
             </div>
           </div>
+          </>
         )}
 
       </div>

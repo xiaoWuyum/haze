@@ -9,11 +9,17 @@ import { LucideIcon } from './LucideIcon';
 import { motion, AnimatePresence } from 'motion/react';
 import { RECOMMENDER_LOGS, SCENE_TAGS } from '../utils/sceneRecommender';
 import { getSceneRecommendation } from '../utils/sceneAiClient';
-import { getVideoGenerationJob, requestVideoGeneration, type VideoGenerationJob } from '../utils/videoGenerationClient';
+import { type VideoGenerationJob } from '../utils/videoGenerationClient';
 
 interface CreateScreenProps {
   songs: Song[];
   ambientSounds: AmbientSound[];
+  videoJob: VideoGenerationJob | null;
+  generatedVideoUrl: string;
+  videoError: string;
+  isGeneratingVideo: boolean;
+  onGenerateVideo: (prompt: string) => Promise<void>;
+  onClearVideoGeneration: () => void;
   onCreateSpace: (space: Space) => void;
 }
 
@@ -22,21 +28,24 @@ const DEFAULT_SCENE_IMAGE = 'https://images.unsplash.com/photo-1493246507139-91e
 export const CreateScreen: React.FC<CreateScreenProps> = ({
   songs,
   ambientSounds,
+  videoJob,
+  generatedVideoUrl,
+  videoError,
+  isGeneratingVideo,
+  onGenerateVideo,
+  onClearVideoGeneration,
   onCreateSpace,
 }) => {
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [enhancedPrompt, setEnhancedPrompt] = useState('');
   const [videoPrompt, setVideoPrompt] = useState('');
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
-  const [videoJob, setVideoJob] = useState<VideoGenerationJob | null>(null);
-  const [videoError, setVideoError] = useState('');
   const [genLogs, setGenLogs] = useState<string[]>([]);
   
   const [title, setTitle] = useState('');
   const [selectedTag, setSelectedTag] = useState('治愈 · 暖');
   const [selectedSongId, setSelectedSongId] = useState(songs[0].id);
+  const [submitError, setSubmitError] = useState('');
   const [createdList, setCreatedList] = useState<AmbientSound[]>(
     ambientSounds.map(s => ({ ...s, volume: 40, isPlaying: s.id === 'rain' }))
   );
@@ -64,9 +73,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         setTitle(recommendation.title);
         setEnhancedPrompt(`${recommendation.prompt}\n\n推荐原因：${recommendation.reason}`);
         setVideoPrompt(recommendation.videoPrompt);
-        setGeneratedVideoUrl('');
-        setVideoJob(null);
-        setVideoError('');
+        onClearVideoGeneration();
         
         // Setup initial sound mixes
         setCreatedList(prev => 
@@ -82,66 +89,10 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     }, 450);
   };
 
-  const pollVideoJob = (jobId: string) => {
-    const interval = window.setInterval(async () => {
-      try {
-        const nextJob = await getVideoGenerationJob(jobId);
-        setVideoJob(nextJob);
-
-        if (nextJob.status === 'completed') {
-          window.clearInterval(interval);
-          setIsGeneratingVideo(false);
-          if (nextJob.videoUrl) {
-            setGeneratedVideoUrl(nextJob.videoUrl);
-          } else {
-            setVideoError('视频任务已完成，但没有返回 videoUrl。');
-          }
-        }
-
-        if (nextJob.status === 'failed') {
-          window.clearInterval(interval);
-          setIsGeneratingVideo(false);
-          setVideoError(nextJob.error || '视频生成失败。');
-        }
-      } catch (error) {
-        window.clearInterval(interval);
-        setIsGeneratingVideo(false);
-        setVideoError(error instanceof Error ? error.message : '无法读取视频生成状态。');
-      }
-    }, 1600);
-  };
-
   const handleGenerateVideo = async () => {
     const prompt = videoPrompt || enhancedPrompt;
     if (!prompt.trim()) return;
-
-    setIsGeneratingVideo(true);
-    setVideoError('');
-    setGeneratedVideoUrl('');
-
-    try {
-      const job = await requestVideoGeneration({
-        prompt,
-      });
-      setVideoJob(job);
-
-      if (job.status === 'completed' && job.videoUrl) {
-        setGeneratedVideoUrl(job.videoUrl);
-        setIsGeneratingVideo(false);
-        return;
-      }
-
-      if (job.status === 'failed') {
-        setVideoError(job.error || '视频生成失败。');
-        setIsGeneratingVideo(false);
-        return;
-      }
-
-      pollVideoJob(job.jobId);
-    } catch (error) {
-      setIsGeneratingVideo(false);
-      setVideoError(error instanceof Error ? error.message : '视频生成请求失败。');
-    }
+    await onGenerateVideo(prompt);
   };
 
   const handleToggleSound = (id: string) => {
@@ -158,9 +109,10 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
     if (!title.trim()) return;
     if (!generatedVideoUrl) {
-      setVideoError('请先生成视频，再发布场景。');
+      setSubmitError('请先生成视频，再发布场景。');
       return;
     }
 
@@ -192,9 +144,8 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     setUserInput('');
     setEnhancedPrompt('');
     setVideoPrompt('');
-    setGeneratedVideoUrl('');
-    setVideoJob(null);
-    setVideoError('');
+    setSubmitError('');
+    onClearVideoGeneration();
     setTimeout(() => {
       setSuccess(false);
     }, 3000);
@@ -309,7 +260,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
               className="mt-1 w-full py-2 rounded-lg bg-white text-black disabled:opacity-40 text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all"
             >
               <LucideIcon name={isGeneratingVideo ? "Loader2" : "Video"} size={11} className={isGeneratingVideo ? "animate-spin" : ""} />
-              <span>{isGeneratingVideo ? "生成循环视频中..." : generatedVideoUrl ? "重新生成视频" : "生成 5 秒循环视频"}</span>
+              <span>{isGeneratingVideo ? "生成循环视频中..." : generatedVideoUrl ? "重新生成视频" : "生成背景视频"}</span>
             </button>
             {videoJob && (
               <div className="text-[9px] text-zinc-500 flex items-center justify-between gap-2">
@@ -329,7 +280,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
                 loop
                 muted
                 playsInline
-                className="w-full aspect-video object-cover rounded-lg border border-white/10 bg-black"
+                className="mx-auto w-full max-w-[220px] aspect-[9/16] object-cover rounded-lg border border-white/10 bg-black"
               />
             )}
             <div className="text-[9px] text-zinc-500 flex items-center gap-1 mt-0.5">
@@ -339,6 +290,23 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
           </motion.div>
         )}
       </div>
+
+      {generatedVideoUrl && !enhancedPrompt && (
+        <div className="mb-6 p-4 rounded-2xl bg-zinc-900/50 border border-emerald-500/20 backdrop-blur-md">
+          <div className="flex items-center gap-2 mb-3 text-emerald-300">
+            <LucideIcon name="CheckCircle2" size={14} />
+            <span className="text-[11px] font-bold tracking-wider">视频已生成，可继续完善场景并发布</span>
+          </div>
+          <video
+            src={generatedVideoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="mx-auto w-full max-w-[220px] aspect-[9/16] object-cover rounded-xl border border-white/10 bg-black"
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-2 mb-3.5 pl-1">
         <LucideIcon name="SlidersHorizontal" size={12} className="text-zinc-500" />
@@ -449,6 +417,12 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         </div>
 
         {/* Create action button */}
+        {submitError && (
+          <div className="text-[10px] text-red-300 bg-red-950/30 border border-red-500/20 rounded-xl px-3 py-2">
+            {submitError}
+          </div>
+        )}
+
         <motion.button
           type="submit"
           whileHover={{ scale: 1.02 }}

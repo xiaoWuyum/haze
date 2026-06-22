@@ -1,4 +1,5 @@
 import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types';
+import { ensureDirectedVideoPrompt } from '../../src/utils/videoPromptDirector';
 
 interface VolcengineTaskResponse {
   id?: string;
@@ -54,6 +55,7 @@ export class VolcengineSeedanceProvider implements VideoProvider {
   private readonly baseUrl: string;
   private readonly model: string;
   private readonly duration: number;
+  private readonly ratio: string;
   private readonly cameraFixed: boolean;
   private readonly watermark: boolean;
 
@@ -70,6 +72,7 @@ export class VolcengineSeedanceProvider implements VideoProvider {
     this.baseUrl = process.env.VOLCENGINE_API_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3';
     this.model = process.env.VOLCENGINE_VIDEO_MODEL || 'doubao-seedance-1-5-pro-251215';
     this.duration = Number(process.env.VIDEO_DURATION || process.env.VOLCENGINE_VIDEO_DURATION || 5);
+    this.ratio = process.env.VOLCENGINE_RATIO || process.env.VIDEO_RATIO || '720:1280';
     this.cameraFixed = (process.env.VOLCENGINE_CAMERA_FIXED || 'true') !== 'false';
     this.watermark = (process.env.VOLCENGINE_WATERMARK || 'false') === 'true';
   }
@@ -78,7 +81,7 @@ export class VolcengineSeedanceProvider implements VideoProvider {
     const content: Array<Record<string, unknown>> = [
       {
         type: 'text',
-        text: `${input.prompt} --duration ${this.duration} --camerafixed ${this.cameraFixed} --watermark ${this.watermark}`,
+        text: `${ensureDirectedVideoPrompt(input.prompt)} --duration ${this.duration} --ratio ${this.ratio} --camerafixed ${this.cameraFixed} --watermark ${this.watermark}`,
       },
     ];
 

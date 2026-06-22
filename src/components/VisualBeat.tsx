@@ -9,9 +9,10 @@ interface VisualBeatProps {
   isPlaying: boolean;
   freqData: number[]; // real-time frequencies (0 - 255)
   colorTheme?: 'cyber' | 'warm' | 'cosmic' | 'ocean' | 'mv';
+  compact?: boolean;
 }
 
-export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, colorTheme = 'cyber' }) => {
+export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, colorTheme = 'cyber', compact = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fallback procedural visual data if no music running
@@ -69,7 +70,7 @@ export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, col
   const activeBars = freqData && freqData.length > 0 ? freqData.slice(0, 32) : mockFreqs;
 
   return (
-    <div ref={containerRef} className="w-full flex items-end justify-center gap-[4px] h-28 px-4 opacity-85">
+    <div ref={containerRef} className={`w-full flex items-end justify-center ${compact ? 'gap-[3px] h-8 px-1' : 'gap-[4px] h-28 px-4'} opacity-85`}>
       {activeBars.map((val, idx) => {
         // Normalize val from 0-255 (if analyzer output) or 0-100 (if mock)
         const isRawAnalyzer = freqData && freqData.length > 0;
@@ -81,7 +82,7 @@ export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, col
         return (
           <div
             key={idx}
-            className={`w-[6px] md:w-[8px] rounded-t-full transition-all duration-75 ${colors.barBg} shadow-[0_0_12px_var(--tw-shadow-color)]`}
+            className={`${compact ? 'w-[3px]' : 'w-[6px] md:w-[8px]'} rounded-t-full transition-all duration-75 ${colors.barBg} shadow-[0_0_12px_var(--tw-shadow-color)]`}
             style={{
               height: `${scaleHeight}%`,
               opacity: 0.35 + (rawPercent * 0.65),

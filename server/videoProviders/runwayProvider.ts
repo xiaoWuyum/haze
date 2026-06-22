@@ -1,4 +1,5 @@
 import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types';
+import { ensureDirectedVideoPrompt } from '../../src/utils/videoPromptDirector';
 
 interface RunwayTask {
   id?: string;
@@ -57,7 +58,7 @@ export class RunwayVideoProvider implements VideoProvider {
     this.apiVersion = process.env.RUNWAY_API_VERSION || '2024-11-06';
     this.baseUrl = process.env.RUNWAY_API_BASE_URL || 'https://api.dev.runwayml.com/v1';
     this.model = process.env.RUNWAY_MODEL || 'gen4_turbo';
-    this.ratio = process.env.RUNWAY_RATIO || '1280:720';
+    this.ratio = process.env.RUNWAY_RATIO || '720:1280';
     this.duration = Number(process.env.RUNWAY_DURATION || 5);
   }
 
@@ -71,7 +72,7 @@ export class RunwayVideoProvider implements VideoProvider {
       },
       body: JSON.stringify({
         model: this.model,
-        promptText: input.prompt,
+        promptText: ensureDirectedVideoPrompt(input.prompt),
         ratio: this.ratio,
         duration: this.duration,
       }),
