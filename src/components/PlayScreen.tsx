@@ -173,28 +173,30 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   return (
     <div className="absolute inset-0 bg-[#09090b] z-40 overflow-y-auto flex flex-col focus:outline-none select-none">
       
-      {/* Background Ambience Layer with high-quality dim opacity */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-black pb-36">
-        <img 
-          src={space.bgImage} 
-          alt={space.title} 
-          className="absolute inset-0 w-full h-full object-cover opacity-10 filter blur-[8px] scale-105 transition-opacity duration-1000"
-          referrerPolicy="no-referrer"
-        />
-        {space.videoUrl && (
+      {/* Immersive scene media. Generated video wins; generated/selected image is the fallback. */}
+      <div className="fixed inset-0 z-0 overflow-hidden bg-black">
+        {space.videoUrl ? (
           <video
             key={space.videoUrl}
             src={space.videoUrl}
+            poster={space.bgImage}
             autoPlay
             loop
             muted
             playsInline
             controls={false}
-            className="absolute inset-0 w-full h-full object-cover opacity-25 filter blur-[2px] scale-102 transition-opacity duration-1000"
-            style={{ contentVisibility: 'auto' }}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+          />
+        ) : (
+          <img
+            src={space.bgImage}
+            alt={space.title}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+            referrerPolicy="no-referrer"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/90 to-[#09090b]/30" />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/45 to-black/20" />
       </div>
 
       {/* Dynamic atmospheric canvas effects */}

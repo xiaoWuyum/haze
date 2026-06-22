@@ -7,12 +7,14 @@ import React, { useState } from 'react';
 import { Space, Song, AmbientSound } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { motion, AnimatePresence } from 'motion/react';
-import { RECOMMENDER_LOGS, SCENE_TAGS, recommendScene } from '../utils/sceneRecommender';
+import { RECOMMENDER_LOGS, SCENE_TAGS } from '../utils/sceneRecommender';
+import { getSceneRecommendation } from '../utils/sceneAiClient';
+import { getVideoGenerationJob, requestVideoGeneration, type VideoGenerationJob } from '../utils/videoGenerationClient';
 
 interface CreateScreenProps {
   songs: Song[];
   ambientSounds: AmbientSound[];
-  onCreateSpace: (space: Space, bgImageChoice: string) => void;
+  onCreateSpace: (space: Space) => void;
 }
 
 const PRESET_WALLPAPERS = [
@@ -73,7 +75,12 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
 }) => {
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [enhancedPrompt, setEnhancedPrompt] = useState('');
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
+  const [videoJob, setVideoJob] = useState<VideoGenerationJob | null>(null);
+  const [videoError, setVideoError] = useState('');
   const [genLogs, setGenLogs] = useState<string[]>([]);
   
   const [title, setTitle] = useState('');
@@ -92,14 +99,14 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     setGenLogs([]);
     
     let logIndex = 0;
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       if (logIndex < RECOMMENDER_LOGS.length) {
         setGenLogs(prev => [...prev, RECOMMENDER_LOGS[logIndex]]);
         logIndex++;
       } else {
         clearInterval(interval);
         
-        const recommendation = recommendScene(userInput, songs);
+        const recommendation = await getSceneRecommendation(userInput, songs);
 
         // Apply state updates simulating immediate smart layout creation
         setSelectedBgId(recommendation.backgroundId);
@@ -107,6 +114,10 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         setSelectedSongId(recommendation.songId);
         setTitle(recommendation.title);
         setEnhancedPrompt(`${recommendation.prompt}\n\n推荐原因：${recommendation.reason}`);
+        setVideoPrompt(recommendation.videoPrompt);
+        setGeneratedVideoUrl('');
+        setVideoJob(null);
+        setVideoError('');
         
         // Setup initial sound mixes
         setCreatedList(prev => 
@@ -120,6 +131,70 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         setIsGenerating(false);
       }
     }, 450);
+  };
+
+  const pollVideoJob = (jobId: string) => {
+    const interval = window.setInterval(async () => {
+      try {
+        const nextJob = await getVideoGenerationJob(jobId);
+        setVideoJob(nextJob);
+
+        if (nextJob.status === 'completed') {
+          window.clearInterval(interval);
+          setIsGeneratingVideo(false);
+          if (nextJob.videoUrl) {
+            setGeneratedVideoUrl(nextJob.videoUrl);
+          } else {
+            setVideoError('视频任务已完成，但没有返回 videoUrl。');
+          }
+        }
+
+        if (nextJob.status === 'failed') {
+          window.clearInterval(interval);
+          setIsGeneratingVideo(false);
+          setVideoError(nextJob.error || '视频生成失败。');
+        }
+      } catch (error) {
+        window.clearInterval(interval);
+        setIsGeneratingVideo(false);
+        setVideoError(error instanceof Error ? error.message : '无法读取视频生成状态。');
+      }
+    }, 1600);
+  };
+
+  const handleGenerateVideo = async () => {
+    const prompt = videoPrompt || enhancedPrompt;
+    if (!prompt.trim()) return;
+    const bgChoice = PRESET_WALLPAPERS.find(p => p.id === selectedBgId) || PRESET_WALLPAPERS[0];
+
+    setIsGeneratingVideo(true);
+    setVideoError('');
+    setGeneratedVideoUrl('');
+
+    try {
+      const job = await requestVideoGeneration({
+        prompt,
+        imageUrl: bgChoice.url,
+      });
+      setVideoJob(job);
+
+      if (job.status === 'completed' && job.videoUrl) {
+        setGeneratedVideoUrl(job.videoUrl);
+        setIsGeneratingVideo(false);
+        return;
+      }
+
+      if (job.status === 'failed') {
+        setVideoError(job.error || '视频生成失败。');
+        setIsGeneratingVideo(false);
+        return;
+      }
+
+      pollVideoJob(job.jobId);
+    } catch (error) {
+      setIsGeneratingVideo(false);
+      setVideoError(error instanceof Error ? error.message : '视频生成请求失败。');
+    }
   };
 
   const handleToggleSound = (id: string) => {
@@ -139,6 +214,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     if (!title.trim()) return;
 
     const bgChoice = PRESET_WALLPAPERS.find(p => p.id === selectedBgId) || PRESET_WALLPAPERS[0];
+    const finalVideoUrl = generatedVideoUrl || bgChoice.videoUrl;
 
     const activeAtmosphereMix = createdList
       .filter(s => s.isPlaying)
@@ -151,22 +227,26 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
       creator: 'Sx (我)',
       creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=creator',
       bgImage: bgChoice.url,
-      videoUrl: bgChoice.videoUrl,
+      videoUrl: finalVideoUrl,
       ambientSounds: activeAtmosphereMix.length > 0 ? activeAtmosphereMix : [{ soundId: 'rain', volume: 50 }],
       defaultSongId: selectedSongId,
       description: enhancedPrompt 
-        ? `使用 AI 增强型创作指令：${enhancedPrompt}`
+        ? `使用 AI 增强型创作指令：${enhancedPrompt}\n\n视频生成 Prompt：${videoPrompt || '未生成'}`
         : `这是由你量身定制的浪漫放松氛围“${title}”，搭配优雅的键盘配器音乐和大自然音，尽享内心的静谧安逸。`,
       type: 'space'
     };
 
-    onCreateSpace(newSpace, bgChoice.url);
+    onCreateSpace(newSpace);
     setSuccess(true);
     
     // Auto reset form
     setTitle('');
     setUserInput('');
     setEnhancedPrompt('');
+    setVideoPrompt('');
+    setGeneratedVideoUrl('');
+    setVideoJob(null);
+    setVideoError('');
     setTimeout(() => {
       setSuccess(false);
     }, 3000);
@@ -267,9 +347,46 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
             <p className="text-[10px] text-cyan-400/80 leading-relaxed italic bg-black/20 p-2 rounded-lg font-mono">
               "{enhancedPrompt}"
             </p>
+            <div className="rounded-lg bg-black/25 border border-cyan-500/10 p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <LucideIcon name="Clapperboard" size={10} className="text-cyan-400" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-cyan-300">Video Loop Prompt</span>
+              </div>
+              <p className="text-[10px] text-zinc-300 leading-relaxed font-mono">{videoPrompt}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateVideo}
+              disabled={isGeneratingVideo || !videoPrompt.trim()}
+              className="mt-1 w-full py-2 rounded-lg bg-white text-black disabled:opacity-40 text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all"
+            >
+              <LucideIcon name={isGeneratingVideo ? "Loader2" : "Video"} size={11} className={isGeneratingVideo ? "animate-spin" : ""} />
+              <span>{isGeneratingVideo ? "生成循环视频中..." : generatedVideoUrl ? "重新生成视频" : "生成 5 秒循环视频"}</span>
+            </button>
+            {videoJob && (
+              <div className="text-[9px] text-zinc-500 flex items-center justify-between gap-2">
+                <span>Provider: {videoJob.provider}</span>
+                <span>Status: {videoJob.status}</span>
+              </div>
+            )}
+            {videoError && (
+              <div className="text-[9px] text-red-300 bg-red-950/30 border border-red-500/20 rounded-lg px-2 py-1.5">
+                {videoError}
+              </div>
+            )}
+            {generatedVideoUrl && (
+              <video
+                src={generatedVideoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video object-cover rounded-lg border border-white/10 bg-black"
+              />
+            )}
             <div className="text-[9px] text-zinc-500 flex items-center gap-1 mt-0.5">
               <LucideIcon name="CornerRightDown" size={9} />
-              <span>已一键同步下方：场景名称、默认主题曲、大气音音控轨道</span>
+              <span>已同步下方：场景名称、默认主题曲、大气音音控轨道；生成视频后发布会优先使用新 videoUrl</span>
             </div>
           </motion.div>
         )}

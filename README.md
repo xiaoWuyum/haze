@@ -20,12 +20,45 @@ Open the local Vite URL:
 http://localhost:3000/
 ```
 
+To enable Gemini-backed scene recommendations during development, run the API server in a second terminal:
+
+```powershell
+npm run dev:api
+```
+
+Create `.env.local` or `.env` from `.env.example` and set `GEMINI_API_KEY`. If the API server or key is missing, the app falls back to the local rule-based recommender.
+
+The video generation flow uses a server-side provider. By default `VIDEO_PROVIDER=mock`, so the UI can test the full queued/generating/completed flow without paid API calls. To use Runway, set:
+
+```powershell
+VIDEO_PROVIDER="runway"
+RUNWAY_API_KEY="YOUR_RUNWAY_API_KEY"
+RUNWAY_MODEL="gen4_turbo"
+RUNWAY_RATIO="1280:720"
+RUNWAY_DURATION="5"
+```
+
+Run the API server after changing `.env`. Never put the Runway key in frontend code.
+
+For Volcengine Ark / Seedance image-to-video, use:
+
+```powershell
+VIDEO_PROVIDER="volcengine"
+VOLCENGINE_API_KEY="YOUR_VOLCENGINE_ARK_API_KEY"
+VOLCENGINE_VIDEO_MODEL="doubao-seedance-1-5-pro-251215"
+VOLCENGINE_VIDEO_DURATION="5"
+VOLCENGINE_CAMERA_FIXED="true"
+VOLCENGINE_WATERMARK="false"
+```
+
 ## Useful Scripts
 
 ```powershell
 npm run lint
 npm run build
 npm run preview
+npm run dev:api
+npm start
 npm run clean
 ```
 
