@@ -50,3 +50,17 @@ public/audio/陶喆-普通朋友.mp3
 ```
 
 Keep these filenames unchanged unless you also update `src/data.ts`.
+
+## Ambient Audio Files
+
+The ambience mixer uses these looped background files from `public/ambient`:
+
+```text
+public/ambient/雨声.mp3
+public/ambient/海浪.mp3
+public/ambient/篝火.mp3
+public/ambient/虫鸣.mp3
+public/ambient/夜晚.flac
+```
+
+`wind` and `vinyl` still use the built-in synthesized effects until matching audio files are added.

@@ -81,7 +81,7 @@ export default function App() {
     // Call audio engine loop
     if (isPlaying) {
       baseAmbients.forEach(async (sound) => {
-        await AudioEngine.setAmbientSound(sound.id, sound.isPlaying, sound.volume);
+        await AudioEngine.setAmbientSound(sound.id, sound.isPlaying, sound.volume, sound.audioUrl);
       });
     }
   };
@@ -94,7 +94,7 @@ export default function App() {
     // Stop all active ambients
     ambientList.forEach(async (sound) => {
       if (sound.isPlaying) {
-        await AudioEngine.setAmbientSound(sound.id, false);
+        await AudioEngine.setAmbientSound(sound.id, false, sound.volume, sound.audioUrl);
       }
     });
 
@@ -113,7 +113,8 @@ export default function App() {
     
     // Fire up active synthe sounds
     space.ambientSounds.forEach(async (mixAtmos) => {
-      await AudioEngine.setAmbientSound(mixAtmos.soundId, true, mixAtmos.volume);
+      const ambient = AMBIENT_SOUNDS.find(sound => sound.id === mixAtmos.soundId);
+      await AudioEngine.setAmbientSound(mixAtmos.soundId, true, mixAtmos.volume, ambient?.audioUrl);
     });
 
     // Write play footprint record
@@ -146,7 +147,7 @@ export default function App() {
       // stop all active ambient synths
       ambientList.forEach(async (sound) => {
         if (sound.isPlaying) {
-          await AudioEngine.setAmbientSound(sound.id, false);
+          await AudioEngine.setAmbientSound(sound.id, false, sound.volume, sound.audioUrl);
         }
       });
       setIsPlaying(false);
@@ -158,7 +159,7 @@ export default function App() {
       // turn on active synthe elements
       ambientList.forEach(async (sound) => {
         if (sound.isPlaying) {
-          await AudioEngine.setAmbientSound(sound.id, true, sound.volume);
+          await AudioEngine.setAmbientSound(sound.id, true, sound.volume, sound.audioUrl);
         }
       });
     }
@@ -197,7 +198,8 @@ export default function App() {
     );
 
     if (isPlaying) {
-      await AudioEngine.setAmbientSound(id, nextState, targetVol);
+      const ambient = AMBIENT_SOUNDS.find(sound => sound.id === id);
+      await AudioEngine.setAmbientSound(id, nextState, targetVol, ambient?.audioUrl);
     }
   };
 

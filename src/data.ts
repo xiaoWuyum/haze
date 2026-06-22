@@ -79,11 +79,11 @@ export const SONGS: Song[] = [
 ];
 
 export const AMBIENT_SOUNDS: AmbientSound[] = [
-  { id: 'rain', name: '雨声', icon: 'CloudRain', volume: 60, isPlaying: false, synthType: 'rain' },
-  { id: 'waves', name: '海浪', icon: 'Waves', volume: 50, isPlaying: false, synthType: 'waves' },
-  { id: 'fire', name: '篝火', icon: 'Flame', volume: 50, isPlaying: false, synthType: 'fire' },
-  { id: 'crickets', name: '虫鸣', icon: 'Bug', volume: 40, isPlaying: false, synthType: 'crickets' },
-  { id: 'space', name: '星空', icon: 'Sparkles', volume: 60, isPlaying: false, synthType: 'space' },
+  { id: 'rain', name: '雨声', icon: 'CloudRain', volume: 60, isPlaying: false, synthType: 'rain', audioUrl: '/ambient/雨声.mp3' },
+  { id: 'waves', name: '海浪', icon: 'Waves', volume: 50, isPlaying: false, synthType: 'waves', audioUrl: '/ambient/海浪.mp3' },
+  { id: 'fire', name: '篝火', icon: 'Flame', volume: 50, isPlaying: false, synthType: 'fire', audioUrl: '/ambient/篝火.mp3' },
+  { id: 'crickets', name: '虫鸣', icon: 'Bug', volume: 40, isPlaying: false, synthType: 'crickets', audioUrl: '/ambient/虫鸣.mp3' },
+  { id: 'space', name: '夜晚', icon: 'Moon', volume: 60, isPlaying: false, synthType: 'space', audioUrl: '/ambient/夜晚.flac' },
   { id: 'wind', name: '风声', icon: 'Wind', volume: 40, isPlaying: false, synthType: 'wind' },
   { id: 'vinyl', name: '黑胶', icon: 'Disc', volume: 30, isPlaying: false, synthType: 'vinyl' },
 ];

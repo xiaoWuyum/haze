@@ -11,6 +11,8 @@ export class AudioEngine {
   private static masterGain: GainNode | null = null;
   private static ambientGains: { [key: string]: GainNode } = {};
   private static ambientSources: { [key: string]: Array<AudioNode> } = {};
+  private static ambientAudioElements: { [key: string]: HTMLAudioElement } = {};
+  private static ambientAudioSources: { [key: string]: MediaElementAudioSourceNode } = {};
   
   // Melody synth properties
   private static songIntervalId: number | null = null;
@@ -124,8 +126,44 @@ export class AudioEngine {
     return buffer;
   }
 
+  private static async tryPlayAmbientFile(id: string, audioUrl: string, targetGain: GainNode): Promise<boolean> {
+    if (!this.ctx) return false;
+
+    if (!this.ambientAudioElements[id]) {
+      const audio = new Audio();
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      const source = this.ctx.createMediaElementSource(audio);
+      source.connect(targetGain);
+      this.ambientAudioElements[id] = audio;
+      this.ambientAudioSources[id] = source;
+    }
+
+    const audio = this.ambientAudioElements[id];
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = audioUrl;
+    audio.volume = 1;
+
+    try {
+      await audio.play();
+      this.ambientSources[id] = [{
+        stop: () => {
+          audio.pause();
+          audio.currentTime = 0;
+        },
+      } as unknown as AudioNode];
+      return true;
+    } catch (error) {
+      console.warn(`Unable to play ambient file ${audioUrl}; falling back to synth playback.`, error);
+      audio.pause();
+      return false;
+    }
+  }
+
   // START/STOP AMBIENT SYNTHS
-  public static async setAmbientSound(id: string, play: boolean, volume = 50) {
+  public static async setAmbientSound(id: string, play: boolean, volume = 50, audioUrl?: string) {
     const ok = await this.checkContext();
     if (!ok || !this.ctx || !this.masterGain) return;
 
@@ -149,6 +187,10 @@ export class AudioEngine {
       this.ambientSources[id] = [];
 
       try {
+        if (audioUrl && await this.tryPlayAmbientFile(id, audioUrl, targetGain)) {
+          return;
+        }
+
         switch (id) {
           case 'rain': {
             // Rain: low-pass pink noise + random drips

@@ -10,6 +10,7 @@ export interface AmbientSound {
   volume: number; // 0 - 100
   isPlaying: boolean;
   synthType: 'rain' | 'waves' | 'fire' | 'crickets' | 'space' | 'wind' | 'vinyl';
+  audioUrl?: string; // Optional looped ambient audio file served from public/ambient
 }
 
 export interface Song {
