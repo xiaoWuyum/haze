@@ -4,6 +4,14 @@
  */
 
 import { Song, Space, AmbientSound } from './types';
+import nightRoomImage from './picture/夜色留声机.png';
+import rainyCityImage from './picture/城市失眠.png';
+import seasideImage from './picture/潮汐假期.png';
+import concertStageImage from './assets/images/concert_stage_1782081762982.jpg';
+import kyotoHouseImage from './assets/images/kyoto_house_1782081720563.jpg';
+import timesSquareImage from './assets/images/times_square_1782081776604.jpg';
+import beachVideo from './assets/video/beach.mp4';
+import rainyCityVideo from './assets/video/rainycity.mp4';
 
 export const SONGS: Song[] = [
   {
@@ -125,7 +133,7 @@ export const DEFAULT_SPACES: Space[] = [
     tag: '蒸汽波 / 夜晚',
     creator: 'AlleoA07',
     creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=alleo',
-    bgImage: '/src/picture/夜色留声机.png',
+    bgImage: nightRoomImage,
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-subway-station-with-neon-lights-44133-large.mp4',
     ambientSounds: [
       { soundId: 'rain', volume: 70 },
@@ -140,7 +148,7 @@ export const DEFAULT_SPACES: Space[] = [
     tag: '治愈 / 暖色',
     creator: 'yuki_',
     creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=yuki',
-    bgImage: '/src/assets/images/kyoto_house_1782081720563.jpg',
+    bgImage: kyotoHouseImage,
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-41864-large.mp4',
     ambientSounds: [
       { soundId: 'crickets', volume: 55 },
@@ -155,8 +163,8 @@ export const DEFAULT_SPACES: Space[] = [
     tag: '街头 / 赛博',
     creator: 'cosm',
     creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=cosm',
-    bgImage: '/src/picture/城市失眠.png',
-    videoUrl: '/src/assets/video/rainycity.mp4',
+    bgImage: rainyCityImage,
+    videoUrl: rainyCityVideo,
     ambientSounds: [
       { soundId: 'space', volume: 75 },
     ],
@@ -169,8 +177,8 @@ export const DEFAULT_SPACES: Space[] = [
     tag: '治愈 / 海边',
     creator: 'sea_',
     creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=sea',
-    bgImage: '/src/picture/潮汐假期.png',
-    videoUrl: '/src/assets/video/beach.mp4',
+    bgImage: seasideImage,
+    videoUrl: beachVideo,
     ambientSounds: [
       { soundId: 'waves', volume: 65 },
       { soundId: 'wind', volume: 30 },
@@ -186,7 +194,7 @@ export const DEFAULT_MVS: Space[] = [
     title: '演唱会现场',
     tag: '舞台 / 聚光',
     creator: 'livehouse',
-    bgImage: '/src/assets/images/concert_stage_1782081762982.jpg',
+    bgImage: concertStageImage,
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-crowd-at-a-concert-with-lights-and-smoke-41712-large.mp4',
     ambientSounds: [
       { soundId: 'vinyl', volume: 20 },
@@ -200,7 +208,7 @@ export const DEFAULT_MVS: Space[] = [
     title: '时代广场',
     tag: '城市 / 霓虹',
     creator: 'city',
-    bgImage: '/src/assets/images/times_square_1782081776604.jpg',
+    bgImage: timesSquareImage,
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-times-square-street-at-night-40544-large.mp4',
     ambientSounds: [
       { soundId: 'wind', volume: 45 },
