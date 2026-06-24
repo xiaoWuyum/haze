@@ -292,3 +292,205 @@
     top: 34%;
   }
 }
+
+.world-console {
+  isolation: isolate;
+}
+
+.world-galaxy {
+  position: absolute;
+  inset: -28%;
+  background:
+    radial-gradient(circle at 48% 42%, rgba(128, 108, 160, 0.16), transparent 16%),
+    radial-gradient(circle at 58% 50%, rgba(76, 62, 116, 0.2), transparent 19%),
+    radial-gradient(circle at 38% 56%, rgba(248, 250, 252, 0.07), transparent 10%),
+    conic-gradient(from 20deg, transparent, rgba(98, 79, 132, 0.14), transparent, rgba(150, 124, 166, 0.09), transparent);
+  filter: blur(22px) saturate(0.86);
+  opacity: 0.88;
+  animation: world-galaxy-drift 24s linear infinite;
+}
+
+.world-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(198, 188, 218, 0.58) 0 1px, transparent 1.5px);
+  background-position: 0 0, 28px 42px;
+  background-size: 72px 72px, 112px 112px;
+  opacity: 0.28;
+}
+
+.world-stars-a {
+  animation: world-star-float 18s linear infinite;
+}
+
+.world-stars-b {
+  transform: scale(1.35);
+  opacity: 0.16;
+  animation: world-star-float 31s linear infinite reverse;
+}
+
+.world-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  opacity: 0.2;
+  mix-blend-mode: screen;
+}
+
+.world-input-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(205, 195, 220, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.34);
+  padding: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 38px rgba(124, 103, 150, 0.14);
+  backdrop-filter: blur(18px);
+}
+
+.world-input-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(126, 103, 156, 0.46), transparent 24%, transparent 74%, rgba(157, 127, 171, 0.4)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 34%);
+  opacity: 0.24;
+  pointer-events: none;
+}
+
+.world-terminal {
+  position: relative;
+  overflow: hidden;
+}
+
+.world-terminal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(196, 181, 213, 0.11), transparent);
+  transform: translateY(-100%);
+  animation: world-terminal-scan 2.4s linear infinite;
+}
+
+.world-cursor {
+  animation: world-cursor-blink 0.9s steps(2, end) infinite;
+}
+
+.world-loader {
+  position: relative;
+  width: min(66vw, 250px);
+  aspect-ratio: 1;
+}
+
+.world-loader-core {
+  position: absolute;
+  inset: 28%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.94), transparent 15%),
+    radial-gradient(circle at 50% 56%, rgba(198, 188, 218, 0.72), rgba(74, 58, 98, 0.34) 52%, transparent 70%);
+  box-shadow:
+    inset -14px -18px 28px rgba(0, 0, 0, 0.35),
+    0 0 42px rgba(124, 103, 150, 0.28);
+}
+
+.world-loader-ring {
+  position: absolute;
+  inset: 13%;
+  border: 1px solid rgba(205, 195, 220, 0.34);
+  border-radius: 50%;
+}
+
+.world-loader-ring-a {
+  transform: rotateX(68deg) rotateZ(12deg);
+  animation: world-ring-spin 5s linear infinite;
+}
+
+.world-loader-ring-b {
+  inset: 4%;
+  border-color: rgba(216, 180, 254, 0.34);
+  transform: rotateX(74deg) rotateZ(-28deg);
+  animation: world-ring-spin 7.5s linear infinite reverse;
+}
+
+.world-loader-scan {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(126, 103, 156, 0.28), transparent 24%);
+  animation: world-scan-spin 1.7s linear infinite;
+  mask-image: radial-gradient(circle, transparent 38%, black 39%, black 54%, transparent 55%);
+}
+
+.world-reveal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  transform: translateX(-120%);
+  animation: world-reveal-flash 1.4s ease-out 0.2s both;
+}
+
+@keyframes world-galaxy-drift {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1.04);
+  }
+}
+
+@keyframes world-star-float {
+  from {
+    background-position: 0 0, 28px 42px;
+  }
+
+  to {
+    background-position: 72px 144px, -84px 154px;
+  }
+}
+
+@keyframes world-terminal-scan {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes world-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes world-ring-spin {
+  to {
+    transform: rotateX(68deg) rotateZ(372deg);
+  }
+}
+
+@keyframes world-scan-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes world-reveal-flash {
+  to {
+    transform: translateX(120%);
+  }
+}

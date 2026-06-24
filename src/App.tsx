@@ -47,7 +47,6 @@ export default function App() {
     { id: 'plaza', label: '广场', icon: 'Compass' },
     { id: 'play', label: '播放', icon: 'Music' },
     { id: 'create', label: '创建', icon: 'Plus' },
-    { id: 'profile', label: '我的', icon: 'User' },
   ];
 
   // Load spaces on initialization
@@ -365,6 +364,7 @@ export default function App() {
               spaces={spaces}
               mvs={mvs}
               onSelectSpace={selectSpaceAction}
+              onOpenProfile={() => setActiveTab('profile')}
             />
           )}
 
@@ -400,6 +400,7 @@ export default function App() {
               onGenerateVideo={handleGenerateVideo}
               onClearVideoGeneration={clearVideoGeneration}
               onCreateSpace={handleCreateSpace}
+              onOpenProfile={() => setActiveTab('profile')}
             />
           </div>
 
@@ -465,7 +466,7 @@ export default function App() {
               >
                 <FluidGlassNavEffect />
               </motion.div>
-              <div className="relative grid h-full grid-cols-5 p-1.5">
+              <div className="relative grid h-full grid-cols-4 p-1.5">
                 {navItems.map(item => {
                   const isActive = activeTab === item.id;
                   const iconSize = item.id === 'play' ? 14 : 15;
@@ -477,7 +478,7 @@ export default function App() {
                       onClick={() => setActiveTab(item.id)}
                       aria-pressed={isActive}
                       className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-[20px] text-xs font-semibold transition-colors duration-300 cursor-pointer ${
-                        isActive ? 'text-white' : 'text-white/62 hover:text-white'
+                        isActive ? 'text-violet-400 drop-shadow-[0_0_10px_rgba(167,139,250,0.75)]' : 'text-white/62 hover:text-white'
                       }`}
                     >
                       <span className="relative z-10 flex h-4 w-4 items-center justify-center">

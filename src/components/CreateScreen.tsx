@@ -1,14 +1,12 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { Space, Song, AmbientSound } from '../types';
-import { LucideIcon } from './LucideIcon';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RECOMMENDER_LOGS, SCENE_TAGS } from '../utils/sceneRecommender';
-import { getSceneRecommendation } from '../utils/sceneAiClient';
+import { AmbientSound, Song, Space } from '../types';
+import { LucideIcon } from './LucideIcon';
 import { type VideoGenerationJob } from '../utils/videoGenerationClient';
 import meAvatarUrl from '../picture/me.jpeg';
 
@@ -22,383 +20,431 @@ interface CreateScreenProps {
   onGenerateVideo: (prompt: string) => Promise<void>;
   onClearVideoGeneration: () => void;
   onCreateSpace: (space: Space) => void;
+  onOpenProfile: () => void;
 }
 
-const DEFAULT_SCENE_IMAGE = 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&auto=format&fit=crop&q=80';
-const PROMPT_PRESETS = ['东京雨夜', '温暖壁炉', '海边午后', '深空漂流'];
+type Stage = 'signal' | 'broadcast' | 'loading' | 'reveal';
+
+interface WorldBlueprint {
+  name: string;
+  subtitle: string;
+  climate: string;
+  gravity: string;
+  civilization: string;
+  firstScene: string;
+  palette: string[];
+  tag: string;
+}
+
+const SIGNAL_EXAMPLES = [
+  '疾驰的高速公路',
+  '月下安静的麦田',
+  '雨中的寺庙',
+];
+
+const WORLD_TAGS = ['治愈', '赛博', '冥想', '幽静', '白噪'];
+
+const BROADCAST_STEPS = [
+  'receiving spatial intent',
+  'mapping emotional terrain',
+  'extracting skyline silhouettes',
+  'constructing atmosphere layer',
+  'tuning light, gravity, weather',
+  'placing traces of civilization',
+  'opening first visitor corridor',
+  'world seed stabilized',
+];
+
+const LOADING_STEPS = [
+  { label: 'Atmosphere', value: 92 },
+  { label: 'Terrain', value: 78 },
+  { label: 'Civilization', value: 64 },
+  { label: 'Light System', value: 88 },
+  { label: 'Unknown Events', value: 47 },
+];
+
+const WORLD_IMAGES = [
+  'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=80',
+];
+
+const makeBlueprint = (signal: string): WorldBlueprint => {
+  const clean = signal.trim() || '未命名的新空间';
+  const seed = clean.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const names = ['ORBIS', 'LUMEN', 'NOCTIL', 'AURA', 'VELA', 'MIRAGE'];
+  const places = ['Archive', 'Harbor', 'Garden', 'Citadel', 'Station', 'Delta'];
+  const climates = ['电蓝色风暴与低温金雾', '长夜微雨与柔光尘埃', '透明海潮与发光雪粒', '热带雷云与银色极光'];
+  const gravities = ['Low / 0.62g', 'Variable / soft drift', 'Reverse pockets', 'Earthlike with slow fall'];
+  const civilizations = ['静默档案员在轨道桥之间传递记忆', '半透明旅人用光谱语言记录天气', '无人电车沿着悬空街区巡航', '灯塔城市每晚向星云广播梦境'];
+  const palettes = [
+    ['#7dd3fc', '#c084fc', '#f8fafc'],
+    ['#22d3ee', '#f0abfc', '#facc15'],
+    ['#a7f3d0', '#93c5fd', '#f9a8d4'],
+    ['#bae6fd', '#ddd6fe', '#fef3c7'],
+  ];
+  const index = seed % names.length;
+
+  return {
+    name: `${names[index]} ${places[(seed + 2) % places.length]}`,
+    subtitle: clean,
+    climate: climates[seed % climates.length],
+    gravity: gravities[(seed + 1) % gravities.length],
+    civilization: civilizations[(seed + 2) % civilizations.length],
+    firstScene: `你抵达“${clean}”。一条发光的引导线从脚下铺开，远处的建筑像动画片里的巨大剪影，慢慢亮起第一盏灯。`,
+    palette: palettes[seed % palettes.length],
+    tag: '新世界 / 科幻',
+  };
+};
 
 export const CreateScreen: React.FC<CreateScreenProps> = ({
   songs,
   ambientSounds,
-  videoJob,
-  generatedVideoUrl,
-  videoError,
-  isGeneratingVideo,
-  onGenerateVideo,
-  onClearVideoGeneration,
   onCreateSpace,
+  onOpenProfile,
 }) => {
-  const [userInput, setUserInput] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [enhancedPrompt, setEnhancedPrompt] = useState('');
-  const [videoPrompt, setVideoPrompt] = useState('');
-  const [genLogs, setGenLogs] = useState<string[]>([]);
-  
-  const [title, setTitle] = useState('');
+  const [stage, setStage] = useState<Stage>('signal');
+  const [signal, setSignal] = useState('');
+  const [streamLines, setStreamLines] = useState<string[]>([]);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [saved, setSaved] = useState(false);
   const [selectedTag, setSelectedTag] = useState('');
-  const [selectedSongId, setSelectedSongId] = useState(songs[0].id);
-  const [submitError, setSubmitError] = useState('');
-  const [createdList, setCreatedList] = useState<AmbientSound[]>(
-    ambientSounds.map(s => ({ ...s, volume: 40, isPlaying: s.id === 'rain' }))
-  );
-  const [success, setSuccess] = useState(false);
+  const timersRef = useRef<number[]>([]);
+  const blueprint = useMemo(() => makeBlueprint(signal), [signal]);
 
-  // AI Prompt expansion engine simulation matching user's exact three-tier logic
-  const handleAIEnhance = () => {
-    if (!userInput.trim()) return;
-    setIsGenerating(true);
-    setGenLogs([]);
-    
-    let logIndex = 0;
-    const interval = setInterval(async () => {
-      if (logIndex < RECOMMENDER_LOGS.length) {
-        setGenLogs(prev => [...prev, RECOMMENDER_LOGS[logIndex]]);
-        logIndex++;
-      } else {
-        clearInterval(interval);
-        
-        const recommendation = await getSceneRecommendation(userInput, songs);
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(timer => window.clearTimeout(timer));
+    };
+  }, []);
 
-        // Apply state updates simulating immediate smart layout creation
-        setSelectedTag(recommendation.tag);
-        setSelectedSongId(recommendation.songId);
-        setTitle(recommendation.title);
-        setEnhancedPrompt(`${recommendation.prompt}\n\n推荐原因：${recommendation.reason}`);
-        setVideoPrompt(recommendation.videoPrompt);
-        onClearVideoGeneration();
-        
-        // Setup initial sound mixes
-        setCreatedList(prev => 
-          prev.map(sound => ({
-            ...sound,
-            isPlaying: recommendation.activeSounds[sound.id] !== undefined,
-            volume: recommendation.activeSounds[sound.id] !== undefined ? recommendation.activeSounds[sound.id] : 30
-          }))
-        );
-
-        setIsGenerating(false);
-      }
-    }, 450);
+  const clearTimers = () => {
+    timersRef.current.forEach(timer => window.clearTimeout(timer));
+    timersRef.current = [];
   };
 
-  const handleGenerateVideo = async () => {
-    const prompt = videoPrompt || enhancedPrompt;
-    if (!prompt.trim()) return;
-    await onGenerateVideo(prompt);
+  const schedule = (callback: () => void, delay: number) => {
+    const timer = window.setTimeout(callback, delay);
+    timersRef.current.push(timer);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError('');
-    if (!title.trim()) return;
-    if (!generatedVideoUrl) {
-      setSubmitError('请先生成视频，再发布场景。');
-      return;
-    }
+  const startGeneration = () => {
+    if (!signal.trim()) return;
+    clearTimers();
+    setSaved(false);
+    setStreamLines([]);
+    setLoadProgress(0);
+    setStage('broadcast');
 
-    const activeAtmosphereMix = createdList
-      .filter(s => s.isPlaying)
-      .map(s => ({ soundId: s.id, volume: s.volume }));
+    BROADCAST_STEPS.forEach((line, index) => {
+      schedule(() => {
+        setStreamLines(prev => [...prev, `> ${line}`]);
+      }, 260 + index * 360);
+    });
 
+    schedule(() => {
+      setStage('loading');
+      let progress = 0;
+      const tick = window.setInterval(() => {
+        progress += Math.max(3, Math.round((100 - progress) / 7));
+        setLoadProgress(Math.min(progress, 100));
+        if (progress >= 100) {
+          window.clearInterval(tick);
+          schedule(() => setStage('reveal'), 460);
+        }
+      }, 180);
+      timersRef.current.push(tick);
+    }, 3600);
+  };
+
+  const reset = () => {
+    clearTimers();
+    setStage('signal');
+    setStreamLines([]);
+    setLoadProgress(0);
+    setSaved(false);
+  };
+
+  const saveWorld = () => {
+    const song = songs.find(item => item.id === 'supernatural') || songs[0];
+    const spaceSound = ambientSounds.find(sound => sound.id === 'space') || ambientSounds[0];
+    const windSound = ambientSounds.find(sound => sound.id === 'wind');
+    const imageIndex = blueprint.name.length % WORLD_IMAGES.length;
     const newSpace: Space = {
-      id: `custom_${Date.now()}`,
-      title: title.trim(),
-      tag: selectedTag,
-      creator: 'Sx (我)',
-      creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=creator',
-      bgImage: DEFAULT_SCENE_IMAGE,
-      videoUrl: generatedVideoUrl,
-      ambientSounds: activeAtmosphereMix.length > 0 ? activeAtmosphereMix : [{ soundId: 'rain', volume: 50 }],
-      defaultSongId: selectedSongId,
-      description: enhancedPrompt 
-        ? `使用 AI 增强型创作指令：${enhancedPrompt}\n\n视频生成 Prompt：${videoPrompt || '未生成'}`
-        : `这是由你量身定制的浪漫放松氛围“${title}”，搭配优雅的键盘配器音乐和大自然音，尽享内心的静谧安逸。`,
-      type: 'space'
+      id: `world_${Date.now()}`,
+      title: blueprint.name,
+      tag: selectedTag ? `${selectedTag} / 新世界` : blueprint.tag,
+      creator: 'Building Your World',
+      creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=world-signal',
+      bgImage: WORLD_IMAGES[imageIndex],
+      ambientSounds: [
+        { soundId: spaceSound.id, volume: 72 },
+        ...(windSound ? [{ soundId: windSound.id, volume: 36 }] : []),
+      ],
+      defaultSongId: song.id,
+      description: [
+        blueprint.subtitle,
+        `气候：${blueprint.climate}`,
+        `重力：${blueprint.gravity}`,
+        `文明痕迹：${blueprint.civilization}`,
+        blueprint.firstScene,
+      ].join('\n'),
+      type: 'space',
     };
 
     onCreateSpace(newSpace);
-    setSuccess(true);
-    
-    // Auto reset form
-    setTitle('');
-    setUserInput('');
-    setEnhancedPrompt('');
-    setVideoPrompt('');
-    setSubmitError('');
-    onClearVideoGeneration();
-    setTimeout(() => {
-      setSuccess(false);
-    }, 3000);
+    setSaved(true);
   };
 
   return (
-    <div className="w-full px-6 pt-8 pb-32 max-w-md mx-auto relative create-studio">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-wide font-sans">创建空间</h1>
-          <p className="text-xs text-zinc-400 mt-1.5">调配画面、音乐和环境音，生成你的沉浸场景</p>
-        </div>
-        <div className="h-10 w-10 overflow-hidden rounded-full border border-white/15 bg-zinc-900 shadow-md shrink-0">
-          <img src={meAvatarUrl} alt="我的头像" className="h-full w-full object-cover" />
-        </div>
-      </div>
+    <div className="world-console relative min-h-screen overflow-hidden bg-[#05020a] px-5 pb-32 pt-7 text-white">
+      <GalaxyBackdrop />
 
-      <AnimatePresence>
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="mb-5 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3 shadow-xl backdrop-blur-md"
-          >
-            <LucideIcon name="Check" className="text-emerald-400 shrink-0" size={18} />
-            <div>
-              <span className="font-bold block text-sm">空间创制成功!</span>
-              请在“广场（精选空间）”或者您的收藏列表里查看并畅听。
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* NEW: Interactive AI Prompt Enhancement Terminal Section */}
-      <div className="create-silk-panel mb-6 p-5 rounded-2xl border border-cyan-300/15 flex flex-col gap-3.5 relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400">AI Scene Studio</h3>
-          </div>
-          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] font-mono text-zinc-400">
-            {isGenerating ? 'SYNC' : 'READY'}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <textarea
-            placeholder="例如: 赛博朋克下的东京雨夜... 或者 温暖壁炉与小木屋... 或者 飞驰的街道..."
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            disabled={isGenerating}
-            rows={2}
-            className="w-full px-3 py-3 bg-black/35 border border-white/10 disabled:opacity-50 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-400/40 transition-all font-sans leading-relaxed text-left resize-none shadow-inner"
-          />
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {PROMPT_PRESETS.map(preset => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setUserInput(preset)}
-                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-zinc-300 hover:border-cyan-300/30 hover:text-cyan-200 transition-colors"
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
+      <div className="relative z-10 flex min-h-[calc(100vh-9rem)] flex-col">
+        <header className="flex items-center justify-end">
           <button
             type="button"
-            onClick={handleAIEnhance}
-            disabled={isGenerating || !userInput.trim()}
-            className="w-full py-2.5 rounded-xl bg-cyan-300 text-black border border-cyan-100/40 hover:bg-cyan-200 disabled:opacity-40 disabled:hover:bg-cyan-300 text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all shadow-[0_10px_28px_rgba(34,211,238,0.16)]"
+            onClick={onOpenProfile}
+            aria-label="打开我的页面"
+            className="h-11 w-11 overflow-hidden rounded-full border border-violet-200/20 bg-white/[0.04] shadow-[0_0_24px_rgba(124,103,150,0.18)] transition hover:border-violet-100/40 active:scale-95"
           >
-            <LucideIcon name="Sparkles" size={11} className={isGenerating ? "animate-spin" : ""} />
-            <span>{isGenerating ? "正在通过 AI 增强管道解析中..." : "智能增强，适配画幅与大自然音"}</span>
+            <img src={meAvatarUrl} alt="我的头像" className="h-full w-full object-cover" />
           </button>
-        </div>
+        </header>
 
-        {/* Dynamic Logging Feed */}
-        {genLogs.length > 0 && (
-          <div className="p-3 rounded-xl bg-black/45 border border-cyan-300/10 font-mono text-[9px] text-cyan-300/90 leading-relaxed text-left max-h-32 overflow-y-auto flex flex-col gap-1 shadow-inner">
-            {genLogs.map((log, index) => (
-              <div key={index} className="flex gap-1.5 items-start">
-                <span className="text-zinc-600 font-bold">›</span>
-                <span>{log}</span>
-              </div>
-            ))}
-            {isGenerating && (
-              <div className="flex gap-1.5 items-center mt-1 text-[8px] text-zinc-500">
-                <div className="w-2.5 h-2.5 rounded-full border border-cyan-400 border-t-transparent animate-spin shrink-0" />
-                <span>实时声波滤波器调理中...</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Display response of enhanced description */}
-        {enhancedPrompt && !isGenerating && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-xl bg-black/25 border border-cyan-300/20 text-xs text-cyan-300 flex flex-col gap-1.5 text-left"
-          >
-            <div className="flex items-center gap-1.5 leading-none">
-              <LucideIcon name="PartyPopper" size={11} className="text-cyan-400" />
-              <span className="font-bold text-[10px] uppercase tracking-wider">Prompt 增强与音景配置已同步!</span>
-            </div>
-            <p className="text-[10px] text-cyan-400/80 leading-relaxed italic bg-black/20 p-2 rounded-lg font-mono">
-              "{enhancedPrompt}"
-            </p>
-            <div className="rounded-lg bg-black/25 border border-cyan-500/10 p-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <LucideIcon name="Clapperboard" size={10} className="text-cyan-400" />
-                <span className="text-[9px] font-bold uppercase tracking-wider text-cyan-300">Video Loop Prompt</span>
-              </div>
-              <p className="text-[10px] text-zinc-300 leading-relaxed font-mono">{videoPrompt}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleGenerateVideo}
-              disabled={isGeneratingVideo || !videoPrompt.trim()}
-              className="mt-1 w-full py-2 rounded-lg bg-white text-black disabled:opacity-40 text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all"
+        <AnimatePresence mode="wait">
+          {stage === 'signal' && (
+            <motion.section
+              key="signal"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -18 }}
+              className="flex flex-1 flex-col justify-center gap-7"
             >
-              <LucideIcon name={isGeneratingVideo ? "Loader2" : "Video"} size={11} className={isGeneratingVideo ? "animate-spin" : ""} />
-              <span>{isGeneratingVideo ? "生成循环视频中..." : generatedVideoUrl ? "重新生成视频" : "生成背景视频"}</span>
-            </button>
-            {videoJob && (
-              <div className="text-[9px] text-zinc-500 flex items-center justify-between gap-2">
-                <span>Provider: {videoJob.provider}</span>
-                <span>Status: {videoJob.status}</span>
+              <div className="space-y-3">
+                <p className="text-4xl font-semibold leading-tight tracking-normal">寻觅我的专属空间</p>
+                <p className="max-w-[18rem] text-sm leading-6 text-white/56">
+                  调配画面、音乐和环境音，生成你的沉浸场景
+                </p>
               </div>
-            )}
-            {videoError && (
-              <div className="text-[9px] text-red-300 bg-red-950/30 border border-red-500/20 rounded-lg px-2 py-1.5">
-                {videoError}
+
+              <div className="world-input-shell">
+                <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-violet-100/60">
+                  <span>Spatial Intent</span>
+                  <span>Ready</span>
+                </div>
+                <textarea
+                  value={signal}
+                  onChange={(event) => setSignal(event.target.value)}
+                  placeholder="比如：漂浮在木星风暴上的图书馆城市"
+                  rows={4}
+                  className="min-h-[128px] w-full resize-none bg-transparent text-xl font-medium leading-8 text-white outline-none placeholder:text-white/25"
+                />
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {SIGNAL_EXAMPLES.map(example => (
+                    <button
+                      key={example}
+                      type="button"
+                      onClick={() => setSignal(example)}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] text-white/70 transition hover:border-violet-200/30 hover:text-violet-100"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-            {generatedVideoUrl && (
-              <video
-                src={generatedVideoUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="mx-auto w-full max-w-[220px] aspect-[9/16] object-cover rounded-lg border border-white/10 bg-black"
-              />
-            )}
-            <div className="text-[9px] text-zinc-500 flex items-center gap-1 mt-0.5">
-              <LucideIcon name="CornerRightDown" size={9} />
-              <span>已同步下方：场景名称、默认主题曲、大气音音控轨道；生成视频后发布会优先使用新 videoUrl</span>
-            </div>
-          </motion.div>
-        )}
-      </div>
 
-      {generatedVideoUrl && !enhancedPrompt && (
-        <div className="mb-6 p-4 rounded-2xl bg-zinc-900/50 border border-emerald-500/20 backdrop-blur-md">
-          <div className="flex items-center gap-2 mb-3 text-emerald-300">
-            <LucideIcon name="CheckCircle2" size={14} />
-            <span className="text-[11px] font-bold tracking-wider">视频已生成，可继续完善场景并发布</span>
-          </div>
-          <video
-            src={generatedVideoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="mx-auto w-full max-w-[220px] aspect-[9/16] object-cover rounded-xl border border-white/10 bg-black"
-          />
-        </div>
-      )}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pl-1">
+                  <LucideIcon name="SlidersHorizontal" size={13} className="text-white/44" />
+                  <h3 className="text-sm font-bold tracking-wide text-white/62">空间标签 / 调性（可选）</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <WorldTagButton label="无标签" active={selectedTag === ''} onClick={() => setSelectedTag('')} />
+                  {WORLD_TAGS.map(tag => (
+                    <WorldTagButton
+                      key={tag}
+                      label={tag}
+                      active={selectedTag === tag}
+                      onClick={() => setSelectedTag(tag)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-      <div className="flex items-center gap-2 mb-3.5 pl-1">
-        <LucideIcon name="SlidersHorizontal" size={12} className="text-zinc-500" />
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">场景参数详情与人工微调</h4>
-      </div>
-
-      <form onSubmit={handleSubmit} className="create-control-panel flex flex-col gap-5 p-5 rounded-2xl border border-white/10">
-        
-        {/* 1. Name Input */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">空间名称</label>
-          <input 
-            type="text" 
-            placeholder="例如: 林间细雨、落叶午后、失落极星..." 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={18}
-            className="w-full px-3.5 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs text-white placeholder-zinc-500 hover:border-white/10 focus:border-cyan-500/40 focus:outline-none transition-all"
-          />
-        </div>
-
-        {/* 2. Preset Tags selection info */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">空间标签 / 调性（可选）</label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedTag('')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer ${
-                selectedTag === ''
-                  ? 'bg-white/10 border-white/20 text-white shadow-md'
-                  : 'bg-black/20 border-zinc-805 text-zinc-400 hover:text-white hover:border-zinc-700'
-              }`}
-            >
-              无标签
-            </button>
-            {SCENE_TAGS.map(tag => (
               <button
                 type="button"
-                key={tag}
-                onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer ${
-                  selectedTag === tag 
-                    ? 'bg-cyan-950/60 border-cyan-500/30 text-cyan-400 shadow-md' 
-                    : 'bg-black/20 border-zinc-805 text-zinc-400 hover:text-white hover:border-zinc-700'
-                }`}
+                onClick={startGeneration}
+                disabled={!signal.trim()}
+                className="group flex h-14 w-full items-center justify-center gap-2 rounded-[18px] border border-violet-100/32 bg-violet-100 text-sm font-bold uppercase tracking-[0.22em] text-black shadow-[0_18px_50px_rgba(124,103,150,0.24)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none"
               >
-                {tag}
+                <LucideIcon name="Sparkles" size={16} />
+                Generate World
               </button>
-            ))}
-          </div>
-        </div>
+            </motion.section>
+          )}
 
-        {/* 3. Select default theme song */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">默认主题音乐</label>
-          <select 
-            value={selectedSongId}
-            onChange={(e) => setSelectedSongId(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-black/40 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500/40 cursor-pointer transition-all"
-          >
-            {songs.map(song => (
-              <option key={song.id} value={song.id} className="bg-zinc-950 text-white text-xs">
-                {song.title} - {song.artist} ({song.genre})
-              </option>
-            ))}
-          </select>
-        </div>
+          {stage === 'broadcast' && (
+            <motion.section
+              key="broadcast"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-1 flex-col justify-center"
+            >
+              <div className="mb-8">
+                <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-fuchsia-200/70">Prompt Broadcast</p>
+                <h2 className="mt-2 text-3xl font-semibold">系统正在解码</h2>
+              </div>
+              <div className="world-terminal min-h-[300px] rounded-[8px] border border-violet-100/12 bg-black/40 p-5 font-mono text-[13px] leading-7 text-violet-100/82 shadow-[inset_0_0_40px_rgba(124,103,150,0.07)]">
+                {streamLines.map((line, index) => (
+                  <motion.div
+                    key={`${line}-${index}`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={index === streamLines.length - 1 ? 'text-white' : ''}
+                  >
+                    {line}
+                  </motion.div>
+                ))}
+                <span className="world-cursor mt-2 inline-block h-4 w-2 bg-violet-200" />
+              </div>
+            </motion.section>
+          )}
 
-        {/* Create action button */}
-        {submitError && (
-          <div className="text-[10px] text-red-300 bg-red-950/30 border border-red-500/20 rounded-xl px-3 py-2">
-            {submitError}
-          </div>
-        )}
+          {stage === 'loading' && (
+            <motion.section
+              key="loading"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              className="flex flex-1 flex-col justify-center gap-7"
+            >
+              <div className="text-center">
+                <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-violet-200/60">Loading New World</p>
+                <h2 className="mt-2 text-3xl font-semibold">{loadProgress}%</h2>
+              </div>
 
-        <motion.button
-          type="submit"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          id="btn_create_submit"
-          className="w-full py-3 mt-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-tr from-cyan-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-black shadow-lg shadow-cyan-500/10 cursor-pointer transition-colors"
-        >
-          发布我的场景时空
-        </motion.button>
+              <div className="world-loader mx-auto">
+                <div className="world-loader-core" />
+                <div className="world-loader-ring world-loader-ring-a" />
+                <div className="world-loader-ring world-loader-ring-b" />
+                <div className="world-loader-scan" />
+              </div>
 
-      </form>
+              <div className="space-y-3">
+                {LOADING_STEPS.map((item, index) => {
+                  const visibleValue = Math.min(item.value, Math.max(0, loadProgress - index * 8));
+                  return (
+                    <div key={item.label} className="grid grid-cols-[6.5rem_1fr_2.5rem] items-center gap-3 font-mono text-[10px] text-white/64">
+                      <span>{item.label}</span>
+                      <div className="h-1 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-violet-200 shadow-[0_0_14px_rgba(196,181,253,0.52)] transition-all duration-300"
+                          style={{ width: `${visibleValue}%` }}
+                        />
+                      </div>
+                      <span className="text-right text-violet-100">{visibleValue}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-center text-xs leading-5 text-white/46">Tip: Some worlds remember their first visitor.</p>
+            </motion.section>
+          )}
+
+          {stage === 'reveal' && (
+            <motion.section
+              key="reveal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-1 flex-col gap-5 pt-7"
+            >
+              <div className="world-reveal relative min-h-[320px] overflow-hidden rounded-[8px] border border-white/10">
+                <img
+                  src={WORLD_IMAGES[blueprint.name.length % WORLD_IMAGES.length]}
+                  alt={blueprint.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,4,10,0.05),rgba(3,4,10,0.82))]" />
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-violet-100/70">New World Found</p>
+                  <h2 className="mt-2 text-4xl font-semibold leading-none">{blueprint.name}</h2>
+                  <p className="mt-3 text-sm leading-5 text-white/70">{blueprint.subtitle}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {blueprint.palette.map(color => (
+                  <div key={color} className="h-10 rounded-[8px] border border-white/10" style={{ background: color }} />
+                ))}
+              </div>
+
+              <div className="space-y-3 rounded-[8px] border border-white/10 bg-white/[0.045] p-4">
+                <WorldFact label="Climate" value={blueprint.climate} />
+                <WorldFact label="Gravity" value={blueprint.gravity} />
+                <WorldFact label="Civilization" value={blueprint.civilization} />
+              </div>
+
+              <p className="rounded-[8px] border border-violet-100/12 bg-violet-100/[0.045] p-4 text-sm leading-6 text-violet-50/82">
+                {blueprint.firstScene}
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="h-12 rounded-[8px] border border-white/12 bg-white/[0.04] text-xs font-bold uppercase tracking-[0.18em] text-white/76"
+                >
+                  Regenerate
+                </button>
+                <button
+                  type="button"
+                  onClick={saveWorld}
+                  disabled={saved}
+                  className="h-12 rounded-[8px] border border-violet-100/32 bg-violet-100 text-xs font-bold uppercase tracking-[0.18em] text-black disabled:bg-emerald-200"
+                >
+                  {saved ? 'Saved' : 'Save World'}
+                </button>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
 
+const WorldFact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-white/36">{label}</p>
+    <p className="mt-1 text-sm leading-5 text-white/82">{value}</p>
+  </div>
+);
+
+const WorldTagButton: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({ label, active, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={active}
+    className={`h-11 rounded-[13px] border px-3 text-sm font-bold tracking-wide transition active:scale-[0.98] ${
+      active
+        ? 'border-white/22 bg-white/[0.13] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_rgba(0,0,0,0.18)]'
+        : 'border-white/26 bg-black/12 text-white/58 hover:border-violet-100/38 hover:bg-white/[0.07] hover:text-white/78'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const GalaxyBackdrop: React.FC = () => (
+  <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div className="world-galaxy" />
+    <div className="world-stars world-stars-a" />
+    <div className="world-stars world-stars-b" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(168,85,247,0.16),transparent_36%),linear-gradient(180deg,rgba(5,2,10,0),#05020a_86%)]" />
+    <div className="world-scanlines" />
+  </div>
+);

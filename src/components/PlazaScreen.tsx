@@ -14,6 +14,7 @@ interface PlazaScreenProps {
   spaces: Space[];
   mvs: Space[];
   onSelectSpace: (space: Space) => void;
+  onOpenProfile: () => void;
 }
 
 const playlistCards = [
@@ -58,6 +59,7 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
   spaces,
   mvs,
   onSelectSpace,
+  onOpenProfile,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -247,9 +249,14 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
           >
             <LucideIcon name="Search" size={18} />
           </button>
-          <div className="w-10 h-10 rounded-full border border-white/15 overflow-hidden bg-zinc-900 shadow-md select-none">
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            aria-label="打开我的页面"
+            className="w-10 h-10 rounded-full border border-white/15 overflow-hidden bg-zinc-900 shadow-md select-none transition hover:border-violet-200/45 active:scale-95"
+          >
             <img src={meAvatarUrl} alt="我的头像" className="w-full h-full object-cover" />
-          </div>
+          </button>
         </div>
       </div>
 
