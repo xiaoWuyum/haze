@@ -98,7 +98,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <h2 className="text-base font-bold text-white tracking-wide">yuxing1018</h2>
           <p className="text-[11px] font-mono text-zinc-500 mt-1 truncate">{userEmail}</p>
           <span className="inline-block mt-2 px-2 py-0.5 text-[9px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/20 rounded-md">
-            觅境行者 Premium
+            觅镜·Haze Premium
           </span>
         </div>
       </div>

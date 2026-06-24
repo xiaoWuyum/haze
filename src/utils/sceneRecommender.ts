@@ -12,7 +12,7 @@ export interface SceneRecommendation {
   reason: string;
 }
 
-export const SCENE_TAGS = ['治愈', '赛博', '冥想 ', '治愈', '幽静', '白噪'];
+export const SCENE_TAGS = ['治愈', '赛博', '冥想', '幽静', '白噪'];
 
 export const RECOMMENDER_LOGS = [
   '[PROMPT ENGINE] 唤醒 Prompt 增强层...',
@@ -68,7 +68,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['赛博', '合成', '都市', '霓虹', '公寓', '城市', 'cyber', 'cyberpunk', 'city', 'neon', 'apartment'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'cyberpunk',
-      tag: '赛博 ',
+      tag: '赛博',
       prompt: 'Cyberpunk Tokyo cityscape, ultra-high floor apartment interior, floor-to-ceiling windows, rain-soaked reflective surfaces, glowing light strips, cinematic depth of field.',
       songId: pickSong(songs, 'ordinary_friends'),
       activeSounds: { rain: 60, vinyl: 35 },

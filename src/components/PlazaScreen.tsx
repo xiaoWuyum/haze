@@ -234,7 +234,7 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
 
       <div className="flex items-center justify-between px-6 pt-8 pb-4">
         <div>
-          <h1 className="text-[28px] font-bold text-white tracking-wide font-sans leading-none">觅境</h1>
+          <h1 className="text-[28px] font-bold text-white tracking-wide font-sans leading-none">觅镜·Haze</h1>
           <p className="text-[12px] text-zinc-400 mt-2 tracking-wider">为每首歌，找到它的空间</p>
         </div>
         <div className="flex items-center gap-3">

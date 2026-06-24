@@ -173,18 +173,17 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
             </span>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400">AI 意境生图与声景定位 (Scene Studio)</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400">AI Scene Studio</h3>
           </div>
-          <span className="text-[9px] px-1.5 py-0.5 border border-cyan-500/20 text-cyan-300 bg-cyan-950/40 rounded font-mono">MVP v1.0</span>
         </div>
 
         <p className="text-[10px] text-zinc-400 leading-relaxed">
-          输入一个简单的词汇或梦境描述，由系统 Prompt 增强层为您**扩写专业描述**、**检索匹配背景**并**自动组合 3 层环境音轨**。
+          输入一个简单的词汇或梦境描述，由系统帮助您扩写。
         </p>
 
         <div className="flex flex-col gap-2">
           <textarea
-            placeholder="例如: 赛博朋克下的东京雨夜... 或者 温暖壁炉与小木屋..."
+            placeholder="例如: 赛博朋克下的东京雨夜... 或者 温暖壁炉与小木屋... 或者 飞驰的街道..."
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             disabled={isGenerating}
@@ -198,7 +197,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
             className="w-full py-2 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 disabled:opacity-40 disabled:hover:bg-cyan-950/80 text-[10px] font-bold tracking-wider hover:text-white flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all"
           >
             <LucideIcon name="Sparkles" size={11} className={isGenerating ? "animate-spin" : ""} />
-            <span>{isGenerating ? "正在通过 AI 增强管道解析中..." : "✨ 智能增强，适配画幅与大自然音"}</span>
+            <span>{isGenerating ? "正在通过 AI 增强管道解析中..." : "智能增强，适配画幅与大自然音"}</span>
           </button>
         </div>
 
@@ -351,7 +350,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
 
         {/* 3. Select default theme song */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">默认主题音乐 (陶喆 经典合辑)</label>
+          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">默认主题音乐</label>
           <select 
             value={selectedSongId}
             onChange={(e) => setSelectedSongId(e.target.value)}
