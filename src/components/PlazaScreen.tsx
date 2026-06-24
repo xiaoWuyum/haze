@@ -17,6 +17,25 @@ interface PlazaScreenProps {
 
 const playlistCards = [
   {
+    id: 'favorites_all',
+    title: '全部收藏',
+    subtitle: '10 首收藏歌曲',
+    coverUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&auto=format&fit=crop&q=80',
+    badge: 'FAVORITES',
+    songIds: [
+      'how_sweet',
+      'hype_boy',
+      'supernatural',
+      'not_like_us',
+      'billie_jean',
+      'hongdou',
+      'summer_wind',
+      'xiaoban',
+      'airport_1030',
+      'ordinary_friends',
+    ],
+  },
+  {
     id: 'kpop',
     title: 'KPOP歌单',
     subtitle: 'NewJeans / K-Pop',

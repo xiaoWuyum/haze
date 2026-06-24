@@ -11,6 +11,7 @@ import concertStageImage from './assets/images/concert_stage_1782081762982.jpg';
 import kyotoHouseImage from './assets/images/kyoto_house_1782081720563.jpg';
 import timesSquareImage from './assets/images/times_square_1782081776604.jpg';
 import beachVideo from './assets/video/beach.mp4';
+import nightVideo from './assets/video/night.mp4';
 import rainyCityVideo from './assets/video/rainycity.mp4';
 
 export const SONGS: Song[] = [
@@ -134,7 +135,7 @@ export const DEFAULT_SPACES: Space[] = [
     creator: 'AlleoA07',
     creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=alleo',
     bgImage: nightRoomImage,
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-subway-station-with-neon-lights-44133-large.mp4',
+    videoUrl: nightVideo,
     ambientSounds: [
       { soundId: 'rain', volume: 70 },
       { soundId: 'vinyl', volume: 40 },

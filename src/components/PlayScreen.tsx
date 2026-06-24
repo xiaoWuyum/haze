@@ -36,6 +36,23 @@ interface PlaylistItem {
 }
 
 const PLAYLISTS: PlaylistItem[] = [
+  {
+    id: 'favorites_all',
+    title: '全部收藏',
+    songs: [
+      'how_sweet',
+      'hype_boy',
+      'supernatural',
+      'not_like_us',
+      'billie_jean',
+      'hongdou',
+      'summer_wind',
+      'xiaoban',
+      'airport_1030',
+      'ordinary_friends',
+    ],
+    tag: 'All Songs',
+  },
   { id: 'rnb', title: '华语 R&B', songs: ['ordinary_friends', 'airport_1030', 'hongdou', 'summer_wind'], tag: 'Chinese R&B' },
   { id: 'pop', title: 'Pop Icons', songs: ['billie_jean', 'how_sweet'], tag: 'Pop' },
   { id: 'kpop', title: 'K-Pop', songs: ['how_sweet', 'hype_boy', 'supernatural'], tag: 'K-Pop' },
