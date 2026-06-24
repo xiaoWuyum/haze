@@ -7,12 +7,32 @@ import React, { useState } from 'react';
 import { Space } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { motion, AnimatePresence } from 'motion/react';
+import MagicBento from './MagicBento';
 
 interface PlazaScreenProps {
   spaces: Space[];
   mvs: Space[];
   onSelectSpace: (space: Space) => void;
 }
+
+const playlistCards = [
+  {
+    id: 'kpop',
+    title: 'KPOP歌单',
+    subtitle: 'NewJeans / K-Pop',
+    coverUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&auto=format&fit=crop&q=80',
+    badge: 'PLAYLIST',
+    songIds: ['how_sweet', 'hype_boy', 'supernatural'],
+  },
+  {
+    id: 'mandopop',
+    title: '华语歌单',
+    subtitle: 'R&B/Mandopop',
+    coverUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=600&auto=format&fit=crop&q=80',
+    badge: 'PLAYLIST',
+    songIds: ['ordinary_friends', 'airport_1030', 'hongdou', 'summer_wind'],
+  },
+];
 
 export const PlazaScreen: React.FC<PlazaScreenProps> = ({
   spaces,
@@ -52,7 +72,7 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
       />
       <div className="min-w-0">
         <h5 className="font-semibold text-white text-sm truncate">{space.title}</h5>
-        <span className="text-xs text-zinc-400 truncate block">{space.creator} · {space.tag}</span>
+        <span className="text-xs text-zinc-400 truncate block">{space.tag ? `${space.creator} · ${space.tag}` : space.creator}</span>
       </div>
     </button>
   );
@@ -73,9 +93,11 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
       <div className="absolute top-3 left-3">
-        <span className="inline-block px-2.5 py-0.5 text-[9px] font-medium rounded-full border text-emerald-300 bg-emerald-950/70 border-emerald-500/20 backdrop-blur-md">
-          {compact ? 'MV' : space.tag}
-        </span>
+        {(compact || space.tag) && (
+          <span className="inline-block px-2.5 py-0.5 text-[9px] font-medium rounded-full border text-emerald-300 bg-emerald-950/70 border-emerald-500/20 backdrop-blur-md">
+            {compact ? 'MV' : space.tag}
+          </span>
+        )}
       </div>
       <div className="absolute bottom-3 left-3 right-3">
         <h3 className="font-semibold text-white text-[13px] leading-tight group-hover:text-cyan-300 transition-colors truncate">
@@ -83,6 +105,48 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
         </h3>
         <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
           <span className="font-mono truncate">{space.creator}</span>
+        </div>
+      </div>
+    </motion.button>
+  );
+
+  const renderPlaylistCard = (playlist: typeof playlistCards[number]) => (
+    <motion.button
+      key={playlist.id}
+      type="button"
+      whileTap={{ scale: 0.97 }}
+      onClick={() => onSelectSpace({
+        id: `playlist_${playlist.id}`,
+        title: playlist.title,
+        tag: playlist.subtitle,
+        creator: '我的歌单',
+        bgImage: playlist.coverUrl,
+        ambientSounds: [],
+        defaultSongId: playlist.songIds[0],
+        description: `${playlist.title} · ${playlist.subtitle}`,
+        type: 'playlist',
+        playlistSongIds: playlist.songIds,
+      })}
+      className="group relative h-36 rounded-2xl overflow-hidden cursor-pointer shadow-lg border border-white/5 bg-zinc-900 transition-all duration-350 hover:border-white/10 text-left"
+    >
+      <img
+        src={playlist.coverUrl}
+        alt={playlist.title}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-[0.72]"
+        referrerPolicy="no-referrer"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+      <div className="absolute top-3 left-3">
+        <span className="inline-block px-2.5 py-0.5 text-[9px] font-medium rounded-full border text-fuchsia-200 bg-fuchsia-950/70 border-fuchsia-400/25 backdrop-blur-md">
+          {playlist.badge}
+        </span>
+      </div>
+      <div className="absolute bottom-3 left-3 right-3">
+        <h3 className="font-semibold text-white text-[13px] leading-tight group-hover:text-fuchsia-200 transition-colors truncate">
+          {playlist.title}
+        </h3>
+        <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
+          <span className="font-mono truncate">{playlist.subtitle}</span>
         </div>
       </div>
     </motion.button>
@@ -174,9 +238,22 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
           <h2 className="text-lg font-bold text-white tracking-wide font-sans">精选空间</h2>
           <span className="text-xs text-zinc-500">查看全部</span>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <MagicBento
+          className="grid grid-cols-2 gap-4"
+          textAutoHide={true}
+          enableStars
+          enableSpotlight
+          enableBorderGlow={true}
+          enableTilt={false}
+          enableMagnetism={false}
+          clickEffect
+          spotlightRadius={400}
+          particleCount={12}
+          glowColor="132, 0, 255"
+          disableAnimations={false}
+        >
           {spaces.map(space => renderCard(space))}
-        </div>
+        </MagicBento>
       </div>
 
       <div id="sec_mv" className="px-6 mt-8">
@@ -184,9 +261,45 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
           <h2 className="text-lg font-bold text-white tracking-wide font-sans">MV 影厅</h2>
           <span className="text-xs text-zinc-500">查看全部</span>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <MagicBento
+          className="grid grid-cols-2 gap-4"
+          textAutoHide={true}
+          enableStars
+          enableSpotlight
+          enableBorderGlow={true}
+          enableTilt={false}
+          enableMagnetism={false}
+          clickEffect
+          spotlightRadius={400}
+          particleCount={12}
+          glowColor="132, 0, 255"
+          disableAnimations={false}
+        >
           {mvs.map(mv => renderCard(mv, true))}
+        </MagicBento>
+      </div>
+
+      <div id="sec_playlists" className="px-6 mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white tracking-wide font-sans">我的歌单</h2>
+          <span className="text-xs text-zinc-500">查看全部</span>
         </div>
+        <MagicBento
+          className="grid grid-cols-2 gap-4"
+          textAutoHide={true}
+          enableStars
+          enableSpotlight
+          enableBorderGlow={true}
+          enableTilt={false}
+          enableMagnetism={false}
+          clickEffect
+          spotlightRadius={400}
+          particleCount={12}
+          glowColor="132, 0, 255"
+          disableAnimations={false}
+        >
+          {playlistCards.map(renderPlaylistCard)}
+        </MagicBento>
       </div>
     </div>
   );

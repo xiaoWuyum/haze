@@ -35,8 +35,9 @@ export interface Space {
   ambientSounds: { soundId: string; volume: number }[];
   defaultSongId: string;
   description?: string;
-  type?: 'space' | 'mv';
+  type?: 'space' | 'mv' | 'playlist';
   videoUrl?: string; // or dynamic visualizer code/style
+  playlistSongIds?: string[];
 }
 
 export interface HistoryRecord {

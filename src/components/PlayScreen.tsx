@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from 'react';
 import { Space, Song, AmbientSound } from '../types';
 import { LucideIcon } from './LucideIcon';
-import { VisualEffects } from './VisualEffects';
 import { VisualBeat } from './VisualBeat';
 import { motion, AnimatePresence } from 'motion/react';
 import { readJson, writeJson } from '../utils/storage';
@@ -27,7 +26,7 @@ interface PlayScreenProps {
   onClose: () => void;
 }
 
-type PanelTab = 'songs' | 'ambience' | 'effects';
+type PanelTab = 'songs' | 'ambience';
 
 interface PlaylistItem {
   id: string;
@@ -37,9 +36,9 @@ interface PlaylistItem {
 }
 
 const PLAYLISTS: PlaylistItem[] = [
-  { id: 'rnb', title: '华语 R&B', songs: ['ordinary_friends', 'airport_1030', 'hongdou'], tag: 'Chinese R&B' },
+  { id: 'rnb', title: '华语 R&B', songs: ['ordinary_friends', 'airport_1030', 'hongdou', 'summer_wind'], tag: 'Chinese R&B' },
   { id: 'pop', title: 'Pop Icons', songs: ['billie_jean', 'how_sweet'], tag: 'Pop' },
-  { id: 'kpop', title: 'K-Pop', songs: ['how_sweet'], tag: 'K-Pop' },
+  { id: 'kpop', title: 'K-Pop', songs: ['how_sweet', 'hype_boy', 'supernatural'], tag: 'K-Pop' },
   { id: 'indie', title: 'Indie Night', songs: ['xiaoban', 'hongdou'], tag: 'Indie' },
   { id: 'city', title: 'City Drive', songs: ['not_like_us', 'airport_1030', 'ordinary_friends', 'billie_jean'], tag: 'City' },
 ];
@@ -63,13 +62,12 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   const [activeTab, setActiveTab] = useState<PanelTab>('songs');
   const [panelOpen, setPanelOpen] = useState(false);
   const [favorite, setFavorite] = useState(false);
-  const [sleepTimer, setSleepTimer] = useState<number | null>(null);
-  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
   const [showChrome, setShowChrome] = useState(true);
 
   const activeSong = songs.find(song => song.id === activeSongId) || songs[0];
   const activePlaylist = PLAYLISTS.find(playlist => playlist.id === activePlaylistId) || PLAYLISTS[4];
-  const playlistSongs = songs.filter(song => activePlaylist.songs.includes(song.id));
+  const activeSongPoolIds = space.playlistSongIds ?? activePlaylist.songs;
+  const playlistSongs = songs.filter(song => activeSongPoolIds.includes(song.id));
   const activeAmbients = ambientSounds.filter(sound => sound.isPlaying);
 
   useEffect(() => {
@@ -83,21 +81,6 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     return () => window.clearTimeout(timeout);
   }, [showChrome, panelOpen]);
 
-  useEffect(() => {
-    if (secondsRemaining === null) return;
-    if (secondsRemaining <= 0) {
-      if (isPlaying) onTogglePlay();
-      setSleepTimer(null);
-      setSecondsRemaining(null);
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      setSecondsRemaining(prev => (prev === null ? null : prev - 1));
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [secondsRemaining, isPlaying, onTogglePlay]);
-
   const revealChrome = () => setShowChrome(true);
 
   const toggleFavorite = () => {
@@ -109,26 +92,17 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     setFavorite(updated.includes(space.id));
   };
 
-  const formatTime = (totalSecs: number) => {
-    const mins = Math.floor(totalSecs / 60);
-    const secs = totalSecs % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const setTimerAction = (minutes: number | null) => {
-    setSleepTimer(minutes);
-    setSecondsRemaining(minutes === null ? null : minutes * 60);
-  };
-
   const handleNextSong = () => {
-    const currentIdx = songs.findIndex(song => song.id === activeSongId);
-    const nextSong = songs[(currentIdx + 1 + songs.length) % songs.length];
+    const songPool = playlistSongs.length > 0 ? playlistSongs : songs;
+    const currentIdx = songPool.findIndex(song => song.id === activeSongId);
+    const nextSong = songPool[(currentIdx + 1 + songPool.length) % songPool.length];
     onSelectSong(nextSong.id);
   };
 
   const handlePrevSong = () => {
-    const currentIdx = songs.findIndex(song => song.id === activeSongId);
-    const prevSong = songs[(currentIdx - 1 + songs.length) % songs.length];
+    const songPool = playlistSongs.length > 0 ? playlistSongs : songs;
+    const currentIdx = songPool.findIndex(song => song.id === activeSongId);
+    const prevSong = songPool[(currentIdx - 1 + songPool.length) % songPool.length];
     onSelectSong(prevSong.id);
   };
 
@@ -162,8 +136,6 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/45" />
       </div>
 
-      <VisualEffects type="rain" freqData={freqData} />
-
       <AnimatePresence>
         {showChrome && (
           <motion.div
@@ -184,7 +156,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
 
               <div className="min-w-0 px-4 text-center">
                 <h1 className="text-sm font-bold text-white truncate">{space.title}</h1>
-                <p className="text-[10px] text-zinc-300 truncate mt-0.5">{space.tag} · {space.creator}</p>
+                <p className="text-[10px] text-zinc-300 truncate mt-0.5">{space.tag ? `${space.tag} · ${space.creator}` : space.creator}</p>
               </div>
 
               <button
@@ -205,7 +177,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 28 }}
-            className="fixed left-0 right-0 bottom-[118px] max-w-md mx-auto z-40 px-4"
+            className="fixed left-0 right-0 bottom-[200px] max-w-md mx-auto z-40 px-4"
             onClick={event => event.stopPropagation()}
           >
             <div className="max-h-[54vh] overflow-hidden rounded-3xl border border-white/10 bg-black/55 backdrop-blur-2xl shadow-2xl">
@@ -214,7 +186,6 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                   {[
                     ['songs', '歌曲', 'ListMusic'],
                     ['ambience', '环境音', 'Sliders'],
-                    ['effects', '特效', 'Sparkles'],
                   ].map(([tab, label, icon]) => (
                     <button
                       key={tab}
@@ -347,43 +318,6 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                   </div>
                 )}
 
-                {activeTab === 'effects' && (
-                  <div className="flex flex-col gap-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      {['雨滴', '雾气', '粒子', '音乐响应'].map((label, index) => (
-                        <button
-                          key={label}
-                          type="button"
-                          className={`p-3 rounded-2xl border text-left ${
-                            index === 0 || index === 3 ? 'bg-emerald-400/10 border-emerald-400/25 text-emerald-200' : 'bg-white/5 border-white/10 text-zinc-400'
-                          }`}
-                        >
-                          <div className="text-xs font-bold">{label}</div>
-                          <div className="text-[9px] mt-1 opacity-70">{index === 0 || index === 3 ? '已开启' : '待接入'}</div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (sleepTimer === null) setTimerAction(15);
-                        else if (sleepTimer === 15) setTimerAction(30);
-                        else if (sleepTimer === 30) setTimerAction(60);
-                        else setTimerAction(null);
-                      }}
-                      className={`flex items-center justify-between p-3 rounded-2xl border ${
-                        sleepTimer ? 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30' : 'bg-white/5 text-zinc-300 border-white/10'
-                      }`}
-                    >
-                      <span className="text-xs font-bold flex items-center gap-2">
-                        <LucideIcon name="Clock" size={13} />
-                        睡眠定时
-                      </span>
-                      <span className="text-[10px] font-mono">{sleepTimer ? formatTime(secondsRemaining || 0) : '关闭'}</span>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>
@@ -391,7 +325,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
       </AnimatePresence>
 
       <div
-        className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 px-4 pb-5 pt-6 bg-gradient-to-t from-black via-black/85 to-transparent"
+        className="fixed bottom-[82px] left-0 right-0 max-w-md mx-auto z-50 px-4 pb-5 pt-6 bg-gradient-to-t from-black via-black/85 to-transparent"
         onClick={event => event.stopPropagation()}
       >
         {!panelOpen && activeAmbients.length > 0 && (

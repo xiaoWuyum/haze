@@ -43,7 +43,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
   const [genLogs, setGenLogs] = useState<string[]>([]);
   
   const [title, setTitle] = useState('');
-  const [selectedTag, setSelectedTag] = useState('治愈 · 暖');
+  const [selectedTag, setSelectedTag] = useState('');
   const [selectedSongId, setSelectedSongId] = useState(songs[0].id);
   const [submitError, setSubmitError] = useState('');
   const [createdList, setCreatedList] = useState<AmbientSound[]>(
@@ -93,18 +93,6 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
     const prompt = videoPrompt || enhancedPrompt;
     if (!prompt.trim()) return;
     await onGenerateVideo(prompt);
-  };
-
-  const handleToggleSound = (id: string) => {
-    setCreatedList(prev => 
-      prev.map(s => s.id === id ? { ...s, isPlaying: !s.isPlaying } : s)
-    );
-  };
-
-  const handleSetVolume = (id: string, vol: number) => {
-    setCreatedList(prev => 
-      prev.map(s => s.id === id ? { ...s, volume: vol } : s)
-    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -331,8 +319,19 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
 
         {/* 2. Preset Tags selection info */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">空间标签 / 调性</label>
+          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">空间标签 / 调性（可选）</label>
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedTag('')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer ${
+                selectedTag === ''
+                  ? 'bg-white/10 border-white/20 text-white shadow-md'
+                  : 'bg-black/20 border-zinc-805 text-zinc-400 hover:text-white hover:border-zinc-700'
+              }`}
+            >
+              无标签
+            </button>
             {SCENE_TAGS.map(tag => (
               <button
                 type="button"
@@ -364,56 +363,6 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
               </option>
             ))}
           </select>
-        </div>
-
-        {/* 5. Custom default atmosphere mixes */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">调配背景大气合成声</label>
-          <p className="text-[10px] text-zinc-500 leading-relaxed">选择开启哪些自然白噪声，并预设它们默认初始音量大小。</p>
-
-          <div className="flex flex-col gap-2.5 mt-1 max-h-44 overflow-y-auto pr-1">
-            {createdList.map(item => {
-              const active = item.isPlaying;
-              return (
-                <div 
-                  key={item.id}
-                  className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${
-                    active 
-                      ? 'bg-zinc-950/60 border-white/10' 
-                      : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleToggleSound(item.id)}
-                    className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
-                      active 
-                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' 
-                        : 'bg-zinc-800 text-zinc-500'
-                    }`}
-                  >
-                    <LucideIcon name={item.icon} size={13} />
-                  </button>
-
-                  <div className="flex-1 min-w-0 pr-1">
-                    <div className="flex items-center justify-between text-[11px] mb-1">
-                      <span className="font-semibold text-white">{item.name}</span>
-                      <span className="text-zinc-500 font-mono">{item.volume}%</span>
-                    </div>
-                    <input 
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={item.volume}
-                      disabled={!active}
-                      onChange={(e) => handleSetVolume(item.id, parseInt(e.target.value))}
-                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer disabled:opacity-20 accent-cyan-400"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
 
         {/* Create action button */}

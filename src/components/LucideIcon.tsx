@@ -27,7 +27,9 @@ import {
   Trash2,
   Check,
   Eye,
-  Settings
+  Settings,
+  SkipBack,
+  SkipForward
 } from 'lucide-react';
 
 interface LucideIconProps {
@@ -84,6 +86,10 @@ export const LucideIcon: React.FC<LucideIconProps> = ({ name, className = '', si
       return <Eye className={className} size={size} />;
     case 'Settings':
       return <Settings className={className} size={size} />;
+    case 'SkipBack':
+      return <SkipBack className={className} size={size} />;
+    case 'SkipForward':
+      return <SkipForward className={className} size={size} />;
     default:
       return <Music className={className} size={size} />;
   }

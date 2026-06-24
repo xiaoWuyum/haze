@@ -12,16 +12,17 @@ import { PlazaScreen } from './components/PlazaScreen';
 import { PlayScreen } from './components/PlayScreen';
 import { CreateScreen } from './components/CreateScreen';
 import { ProfileScreen } from './components/ProfileScreen';
+import { HomeScreen } from './components/HomeScreen';
 import { NowPlayingBanner } from './components/NowPlayingBanner';
 import { VideoGenerationToast } from './components/VideoGenerationToast';
 import { motion, AnimatePresence } from 'motion/react';
 import { readJson, readNumber, removeStoredValue, writeJson, writeNumber } from './utils/storage';
 import { getVideoGenerationJob, requestVideoGeneration, type VideoGenerationJob } from './utils/videoGenerationClient';
 
-type TabType = 'plaza' | 'play' | 'create' | 'profile';
+type TabType = 'home' | 'plaza' | 'play' | 'create' | 'profile';
 
 export default function App() {
-  const [activeTab, setActiveTab ] = useState<TabType>('plaza');
+  const [activeTab, setActiveTab ] = useState<TabType>('home');
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [mvs] = useState<Space[]>(DEFAULT_MVS);
   
@@ -38,6 +39,13 @@ export default function App() {
   
   // Analyser frequencies
   const [freqData, setFreqData] = useState<number[]>([]);
+  const navItems: Array<{ id: TabType; label: string; icon: string }> = [
+    { id: 'home', label: '首页', icon: 'Home' },
+    { id: 'plaza', label: '广场', icon: 'Compass' },
+    { id: 'play', label: '播放', icon: 'Music' },
+    { id: 'create', label: '创建', icon: 'Plus' },
+    { id: 'profile', label: '我的', icon: 'User' },
+  ];
 
   // Load spaces on initialization
   useEffect(() => {
@@ -340,7 +348,14 @@ export default function App() {
       <div className="w-full max-w-md mx-auto min-h-screen flex flex-col relative bg-zinc-950 shadow-[0_0_50px_rgba(0,0,0,0.8)] border-x border-zinc-900/40">
         
         {/* Core Screen Render Grid */}
-        <div className="flex-1 w-full relative">
+          <div className="flex-1 w-full relative">
+          {activeTab === 'home' && (
+            <HomeScreen
+              onOpenPlaza={() => setActiveTab('plaza')}
+              onOpenPlay={() => setActiveTab('play')}
+              onOpenCreate={() => setActiveTab('create')}
+            />
+          )}
           
           {activeTab === 'plaza' && (
             <PlazaScreen
@@ -396,96 +411,70 @@ export default function App() {
         </div>
 
         {/* Global Floating Bottom Navigation Bar aligned with screenshot exactly */}
-        {activeTab !== 'play' && (
-          <>
+        <>
           <AnimatePresence>
-            {videoJob && activeTab !== 'create' && (
+            {videoJob && activeTab !== 'home' && activeTab !== 'create' && activeTab !== 'play' && (
               <VideoGenerationToast
                 job={videoJob}
                 onOpenCreate={() => setActiveTab('create')}
               />
             )}
           </AnimatePresence>
-          <NowPlayingBanner
-            song={SONGS.find(s => s.id === activeSongId) || SONGS[0]}
-            isPlaying={isPlaying}
-            onOpenPlayer={() => setActiveTab('play')}
-            onTogglePlay={handleTogglePlay}
-            onNextSong={handleNextSong}
-          />
-          <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 px-6 pb-6 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pt-4">
-            <div 
+          {activeTab !== 'home' && activeTab !== 'play' && (
+            <NowPlayingBanner
+              song={SONGS.find(s => s.id === activeSongId) || SONGS[0]}
+              isPlaying={isPlaying}
+              onOpenPlayer={() => setActiveTab('play')}
+              onTogglePlay={handleTogglePlay}
+              onNextSong={handleNextSong}
+            />
+          )}
+          <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-[70] px-5 pb-5 pt-7 bg-gradient-to-t from-black/20 via-black/5 to-transparent">
+            <div
               style={{ contentVisibility: 'auto' }}
-              className="flex items-center justify-between px-3 py-2 bg-neutral-900/90 border border-white/5 backdrop-blur-xl rounded-full shadow-2xl"
+              className="relative h-[64px] overflow-hidden rounded-[24px] border border-white/30 bg-white/[0.075] shadow-[0_14px_38px_rgba(0,0,0,0.22),inset_0_1px_1px_rgba(255,255,255,0.42)] backdrop-blur-2xl"
             >
-              
-              {/* Tab 1: Plaza (广场) */}
-              <button
-                onClick={() => setActiveTab('plaza')}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full transition-all duration-350 cursor-pointer text-xs font-semibold ${
-                  activeTab === 'plaza'
-                    ? 'bg-[#4ade80] text-black font-bold shadow-[0_4px_12px_rgba(74,222,128,0.3)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <LucideIcon name="Compass" size={15} />
-                </div>
-                <span>广场</span>
-              </button>
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.28),rgba(255,255,255,0.045)_36%,rgba(255,255,255,0.015)_66%,rgba(190,240,255,0.11))]" />
+              <div className="pointer-events-none absolute left-5 right-5 top-0 h-px bg-white/50" />
+              <div className="pointer-events-none absolute inset-x-10 bottom-0 h-px bg-cyan-100/15" />
+              <div className="relative grid h-full grid-cols-5 p-1.5">
+                {navItems.map(item => {
+                  const isActive = activeTab === item.id;
+                  const iconSize = item.id === 'play' ? 14 : 15;
 
-              {/* Tab 2: Play (播放) */}
-              <button
-                onClick={() => setActiveTab('play')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-350 cursor-pointer text-xs font-semibold ${
-                  activeTab === 'play'
-                    ? 'bg-[#4ade80] text-black font-bold shadow-[0_4px_12px_rgba(74,222,128,0.3)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <div className="w-4 h-4 flex items-center justify-center relative">
-                  <LucideIcon name="Music" size={14} />
-                  {isPlaying && (
-                    <span className="absolute -top-[1px] -right-[1px] w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping" />
-                  )}
-                </div>
-                <span>播放</span>
-              </button>
-
-              {/* Tab 3: Create (创建) */}
-              <button
-                onClick={() => setActiveTab('create')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-350 cursor-pointer text-xs font-semibold ${
-                  activeTab === 'create'
-                    ? 'bg-[#4ade80] text-black font-bold shadow-[0_4px_12px_rgba(74,222,128,0.3)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <LucideIcon name="Plus" size={15} />
-                </div>
-                <span>创建</span>
-              </button>
-
-              {/* Tab 4: Profile (我的) */}
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-350 cursor-pointer text-xs font-semibold ${
-                  activeTab === 'profile'
-                    ? 'bg-[#4ade80] text-black font-bold shadow-[0_4px_12px_rgba(74,222,128,0.3)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <LucideIcon name="User" size={15} />
-                </div>
-                <span>我的</span>
-              </button>
-
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTab(item.id)}
+                      aria-pressed={isActive}
+                      className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-[20px] text-xs font-semibold transition-colors duration-300 cursor-pointer ${
+                        isActive ? 'text-white' : 'text-white/62 hover:text-white'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="active-bottom-nav-glass"
+                          transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                          className="absolute inset-0 rounded-[20px] border border-white/35 bg-white/[0.16] shadow-[0_10px_24px_rgba(255,255,255,0.08),inset_0_1px_1px_rgba(255,255,255,0.46)]"
+                        >
+                          <span className="absolute left-1/2 top-1 h-1 w-5 -translate-x-1/2 rounded-full bg-white/55" />
+                        </motion.div>
+                      )}
+                      <span className="relative z-10 flex h-4 w-4 items-center justify-center">
+                        <LucideIcon name={item.icon} size={iconSize} />
+                        {item.id === 'play' && isPlaying && (
+                          <span className="absolute -top-[1px] -right-[1px] h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,0.9)] animate-ping" />
+                        )}
+                      </span>
+                      <span className="relative z-10 truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-          </>
-        )}
+        </>
 
       </div>
     </div>

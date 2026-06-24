@@ -13,6 +13,9 @@ export class AudioEngine {
   private static ambientSources: { [key: string]: Array<AudioNode> } = {};
   private static ambientAudioElements: { [key: string]: HTMLAudioElement } = {};
   private static ambientAudioSources: { [key: string]: MediaElementAudioSourceNode } = {};
+  private static ambientOutputTrims: { [key: string]: number } = {
+    crickets: 0.25,
+  };
   
   // Melody synth properties
   private static songIntervalId: number | null = null;
@@ -163,6 +166,10 @@ export class AudioEngine {
     }
   }
 
+  private static getAmbientGainValue(id: string, volume: number) {
+    return volume / 100 * 0.5 * (this.ambientOutputTrims[id] ?? 1);
+  }
+
   // START/STOP AMBIENT SYNTHS
   public static async setAmbientSound(id: string, play: boolean, volume = 50, audioUrl?: string) {
     const ok = await this.checkContext();
@@ -180,7 +187,7 @@ export class AudioEngine {
 
     // If turn on
     if (play) {
-      targetGain.gain.linearRampToValueAtTime(volume / 100 * 0.5, this.ctx.currentTime + 1.2);
+      targetGain.gain.linearRampToValueAtTime(this.getAmbientGainValue(id, volume), this.ctx.currentTime + 1.2);
       
       // If already playing nodes, don't recreate
       if (this.ambientSources[id] && this.ambientSources[id].length > 0) return;
@@ -458,7 +465,7 @@ export class AudioEngine {
 
   public static setAmbientVolume(id: string, volume: number) {
     if (!this.ambientGains[id] || !this.ctx) return;
-    this.ambientGains[id].gain.linearRampToValueAtTime(volume / 100 * 0.5, this.ctx.currentTime + 0.1);
+    this.ambientGains[id].gain.linearRampToValueAtTime(this.getAmbientGainValue(id, volume), this.ctx.currentTime + 0.1);
   }
 
   // PROCEDURAL AUDIO CLIPS

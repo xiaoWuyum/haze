@@ -146,7 +146,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   />
                   <div className="truncate text-left">
                     <h4 className="font-semibold text-white text-xs leading-none">{space.title}</h4>
-                    <span className="text-[10px] text-zinc-500 mt-1 block font-mono">{space.creator} · {space.tag}</span>
+                    <span className="text-[10px] text-zinc-500 mt-1 block font-mono">{space.tag ? `${space.creator} · ${space.tag}` : space.creator}</span>
                   </div>
                 </div>
 
@@ -182,7 +182,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <img src={space.bgImage} alt={space.title} className="w-10 h-10 rounded-lg object-cover shrink-0" referrerPolicy="no-referrer" />
                   <div className="truncate text-left">
                     <h5 className="font-semibold text-white text-xs">{space.title}</h5>
-                    <span className="text-[9px] px-1.5 py-0.5 mt-1 inline-block border border-cyan-500/20 text-cyan-400 bg-cyan-950/60 rounded-md font-bold">{space.tag}</span>
+                    {space.tag && (
+                      <span className="text-[9px] px-1.5 py-0.5 mt-1 inline-block border border-cyan-500/20 text-cyan-400 bg-cyan-950/60 rounded-md font-bold">{space.tag}</span>
+                    )}
                   </div>
                 </div>
                 <button
