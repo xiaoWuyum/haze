@@ -8,6 +8,7 @@ import { Space, Song, HistoryRecord, UserStats } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { motion } from 'motion/react';
 import { readJson, readNumber, writeJson } from '../utils/storage';
+import meAvatarUrl from '../picture/me.jpeg';
 
 interface ProfileScreenProps {
   spaces: Space[];
@@ -86,8 +87,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       
       {/* 1. Profile card layout */}
       <div className="flex items-center gap-4 bg-zinc-900/40 p-5 rounded-2xl border border-white/5 backdrop-blur-md">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-600 border border-white/10 flex items-center justify-center font-bold text-xl text-white shadow-lg overflow-hidden shrink-0">
-          Sx
+        <div className="w-16 h-16 rounded-full border border-white/10 shadow-lg overflow-hidden shrink-0 bg-zinc-900">
+          <img
+            src={meAvatarUrl}
+            alt="我的头像"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="truncate">
           <h2 className="text-base font-bold text-white tracking-wide">yuxing1018</h2>
@@ -245,17 +250,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
         )}
       </div>
-
-      {/* 6. System Actions */}
-      <div className="mt-4 border-t border-white/5 pt-6 flex flex-col gap-3">
-        <button
-          onClick={onResetApp}
-          className="w-full py-2.5 rounded-xl text-xs font-semibold bg-zinc-950 border border-red-500/25 text-red-400 hover:bg-neutral-900 active:scale-95 transition-all text-center cursor-pointer select-none"
-        >
-          重置应用本地数据
-        </button>
-      </div>
-
     </div>
   );
 };

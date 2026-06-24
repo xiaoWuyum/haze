@@ -6,6 +6,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 
+import frontVideoUrl from '../assets/video/front.mp4';
 import background2Url from '../picture/background2.png';
 import heart2Url from '../picture/heart2.png';
 import mp3Url from '../picture/mp3.png';
@@ -25,10 +26,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }: HomeScreenProps) => {
   return (
     <div className="home-screen">
-      <img
-        src={background2Url}
-        alt=""
+      <video
+        src={frontVideoUrl}
+        poster={background2Url}
         aria-hidden="true"
+        autoPlay
+        muted
+        loop
+        playsInline
         className="home-background"
       />
 

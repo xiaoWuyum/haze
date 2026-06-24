@@ -24,6 +24,14 @@ export class AudioEngine {
   private static isSongPlaying = false;
   private static songVolume = 60; // 0 - 100
   private static songGain: GainNode | null = null;
+  private static musicBassFilter: BiquadFilterNode | null = null;
+  private static musicToneFilter: BiquadFilterNode | null = null;
+  private static musicPanner: StereoPannerNode | null = null;
+  private static musicDryGain: GainNode | null = null;
+  private static musicReverb: ConvolverNode | null = null;
+  private static musicReverbGain: GainNode | null = null;
+  private static surroundOscillator: OscillatorNode | null = null;
+  private static surroundDepth: GainNode | null = null;
   private static activeSongId: string | null = null;
   private static audioElement: HTMLAudioElement | null = null;
   private static audioElementSource: MediaElementAudioSourceNode | null = null;
@@ -57,10 +65,46 @@ export class AudioEngine {
     this.masterGain.connect(this.analyserNode);
     this.analyserNode.connect(this.ctx.destination);
     
-    // Setup Song Gain
+    // Setup Song Gain and music effect chain
     this.songGain = this.ctx.createGain();
     this.songGain.gain.setValueAtTime(this.songVolume / 100, this.ctx.currentTime);
-    this.songGain.connect(this.masterGain);
+
+    this.musicBassFilter = this.ctx.createBiquadFilter();
+    this.musicBassFilter.type = 'lowshelf';
+    this.musicBassFilter.frequency.setValueAtTime(120, this.ctx.currentTime);
+    this.musicBassFilter.gain.setValueAtTime(0, this.ctx.currentTime);
+
+    this.musicToneFilter = this.ctx.createBiquadFilter();
+    this.musicToneFilter.type = 'lowpass';
+    this.musicToneFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
+    this.musicToneFilter.Q.setValueAtTime(0.2, this.ctx.currentTime);
+
+    this.musicDryGain = this.ctx.createGain();
+    this.musicDryGain.gain.setValueAtTime(1, this.ctx.currentTime);
+
+    this.musicReverb = this.ctx.createConvolver();
+    this.musicReverb.buffer = this.createReverbImpulse(1.7, 1.8);
+
+    this.musicReverbGain = this.ctx.createGain();
+    this.musicReverbGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+    this.songGain.connect(this.musicBassFilter);
+    this.musicBassFilter.connect(this.musicToneFilter);
+
+    if ('createStereoPanner' in this.ctx) {
+      this.musicPanner = this.ctx.createStereoPanner();
+      this.musicPanner.pan.setValueAtTime(0, this.ctx.currentTime);
+      this.musicToneFilter.connect(this.musicPanner);
+      this.musicPanner.connect(this.musicDryGain);
+      this.musicPanner.connect(this.musicReverb);
+    } else {
+      this.musicToneFilter.connect(this.musicDryGain);
+      this.musicToneFilter.connect(this.musicReverb);
+    }
+
+    this.musicDryGain.connect(this.masterGain);
+    this.musicReverb.connect(this.musicReverbGain);
+    this.musicReverbGain.connect(this.masterGain);
     
     // Start Visualizer analysis loop
     this.runAnalysisLoop();
@@ -163,6 +207,74 @@ export class AudioEngine {
       console.warn(`Unable to play ambient file ${audioUrl}; falling back to synth playback.`, error);
       audio.pause();
       return false;
+    }
+  }
+
+  private static createReverbImpulse(duration = 1.6, decay = 1.7): AudioBuffer {
+    if (!this.ctx) throw new Error("Audio Context not initialized");
+    const length = Math.floor(this.ctx.sampleRate * duration);
+    const impulse = this.ctx.createBuffer(2, length, this.ctx.sampleRate);
+
+    for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
+      const data = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        const fade = Math.pow(1 - i / length, decay);
+        data[i] = (Math.random() * 2 - 1) * fade * 0.55;
+      }
+    }
+
+    return impulse;
+  }
+
+  private static stopSurroundMotion() {
+    if (this.surroundOscillator) {
+      try { this.surroundOscillator.stop(); } catch (e) {}
+      this.surroundOscillator.disconnect();
+      this.surroundOscillator = null;
+    }
+    if (this.surroundDepth) {
+      this.surroundDepth.disconnect();
+      this.surroundDepth = null;
+    }
+    if (this.musicPanner && this.ctx) {
+      this.musicPanner.pan.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+    }
+  }
+
+  public static async setMusicEffect(effectId: string, enabled: boolean) {
+    const ok = await this.checkContext();
+    if (!ok || !this.ctx) return;
+
+    switch (effectId) {
+      case 'surround': {
+        this.stopSurroundMotion();
+        if (enabled && this.musicPanner) {
+          this.surroundOscillator = this.ctx.createOscillator();
+          this.surroundDepth = this.ctx.createGain();
+          this.surroundOscillator.type = 'sine';
+          this.surroundOscillator.frequency.setValueAtTime(0.18, this.ctx.currentTime);
+          this.surroundDepth.gain.setValueAtTime(0.42, this.ctx.currentTime);
+          this.surroundOscillator.connect(this.surroundDepth);
+          this.surroundDepth.connect(this.musicPanner.pan);
+          this.surroundOscillator.start();
+        }
+        break;
+      }
+      case 'bass': {
+        this.musicBassFilter?.gain.linearRampToValueAtTime(enabled ? 7 : 0, this.ctx.currentTime + 0.18);
+        break;
+      }
+      case 'reverb': {
+        this.musicReverbGain?.gain.linearRampToValueAtTime(enabled ? 0.18 : 0, this.ctx.currentTime + 0.18);
+        if (this.musicDryGain) {
+          this.musicDryGain.gain.linearRampToValueAtTime(enabled ? 0.92 : 1, this.ctx.currentTime + 0.18);
+        }
+        break;
+      }
+      case 'night': {
+        this.musicToneFilter?.frequency.linearRampToValueAtTime(enabled ? 6200 : 20000, this.ctx.currentTime + 0.18);
+        break;
+      }
     }
   }
 

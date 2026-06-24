@@ -12,12 +12,11 @@ export interface SceneRecommendation {
   reason: string;
 }
 
-export const SCENE_TAGS = ['治愈 · 暖', '赛博 · 夜', '冥想 · 深', '治愈 · 海', '幽静 · 静', '白噪 · 眠'];
+export const SCENE_TAGS = ['治愈', '赛博', '冥想 ', '治愈', '幽静', '白噪'];
 
 export const RECOMMENDER_LOGS = [
   '[PROMPT ENGINE] 唤醒 Prompt 增强层...',
   '[VISION COG] 正在把描述转译为电影级循环画面构图...',
-  '[ACOUSTIC COG] 分析远景、中景、近景的空间声景层次...',
   '[SPATIAL DESCRIPTOR] 场景配置与参数标定完成，正在同步至 Scene Studio!',
 ];
 
@@ -69,7 +68,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['赛博', '合成', '都市', '霓虹', '公寓', '城市', 'cyber', 'cyberpunk', 'city', 'neon', 'apartment'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'cyberpunk',
-      tag: '赛博 · 夜',
+      tag: '赛博 ',
       prompt: 'Cyberpunk Tokyo cityscape, ultra-high floor apartment interior, floor-to-ceiling windows, rain-soaked reflective surfaces, glowing light strips, cinematic depth of field.',
       songId: pickSong(songs, 'ordinary_friends'),
       activeSounds: { rain: 60, vinyl: 35 },
@@ -80,7 +79,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['雨林', '森林', '树', '绿', '自然', 'rain', 'forest', 'tree', 'nature', 'green'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'rainforest',
-      tag: '幽静 · 静',
+      tag: '幽静',
       prompt: 'Lush emerald rain forest at dawn, soft mist, dappled light and leaf shadow play, floating dust motes, quiet cinematic atmosphere.',
       songId: pickSong(songs, 'xiaoban'),
       activeSounds: { rain: 80, wind: 30 },
@@ -91,7 +90,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['银河', '宇宙', '星', '暗', '太空', '科幻', 'space', 'star', 'galaxy', 'cosmic', 'sci-fi', 'scifi'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'space',
-      tag: '冥想 · 深',
+      tag: '冥想',
       prompt: 'Deep space observation room, silver starlight, abstract light waves, violet cosmic haze, meditative sci-fi mood.',
       songId: pickSong(songs, 'how_sweet'),
       activeSounds: { space: 70, vinyl: 20 },
@@ -102,7 +101,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['海', '海浪', '沙滩', '椰', '岛', '晴', 'sea', 'ocean', 'wave', 'beach', 'island', 'sunny'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'beach',
-      tag: '治愈 · 海',
+      tag: '治愈',
       prompt: 'Quiet tropical beach, gentle water surface shimmer, wet sand reflections, pale blue horizon, calm cinematic coastal mood.',
       songId: pickSong(songs, 'hongdou'),
       activeSounds: { waves: 75, wind: 35 },
@@ -113,7 +112,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
   if (includesAny(text, ['雪', '冬', '寒', '冰', '冷', 'snow', 'winter', 'cold', 'ice', 'frozen'])) {
     return createRecommendation(input, songs, {
       backgroundId: 'snowpeak',
-      tag: '治愈 · 寒',
+      tag: '治愈',
       prompt: 'Snowy mountain shelter at dusk, warm glowing windows, fine atmospheric particles, soft color bloom, quiet winter mood.',
       songId: pickSong(songs, 'xiaoban'),
       activeSounds: { fire: 65, wind: 55 },
@@ -123,7 +122,7 @@ export function recommendScene(input: string, songs: Song[]): SceneRecommendatio
 
   return createRecommendation(input, songs, {
     backgroundId: 'cabin',
-    tag: '治愈 · 暖',
+    tag: '治愈',
     prompt: 'Cozy interior sanctuary, candle flicker, gently moving curtains, dust motes in light beams, slow rising steam, warm cinematic mood.',
     songId: pickSong(songs, 'airport_1030'),
     activeSounds: { fire: 70, crickets: 45, rain: 40 },

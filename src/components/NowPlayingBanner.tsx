@@ -25,7 +25,7 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.99 }}
         onClick={onOpenPlayer}
-        className="flex items-center justify-between p-3 bg-transparent border border-white/20 rounded-2xl shadow-[0_18px_38px_rgba(0,0,0,0.18)] cursor-pointer select-none"
+        className="flex items-center justify-between p-3 bg-transparent backdrop-blur-sm border border-white/20 rounded-2xl shadow-[0_18px_38px_rgba(0,0,0,0.18)] cursor-pointer select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-11 h-11 rounded-full flex items-center justify-center bg-transparent overflow-hidden shadow-md border border-white/15 shrink-0">

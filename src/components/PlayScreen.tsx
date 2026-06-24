@@ -9,6 +9,7 @@ import { LucideIcon } from './LucideIcon';
 import { VisualBeat } from './VisualBeat';
 import { motion, AnimatePresence } from 'motion/react';
 import { readJson, writeJson } from '../utils/storage';
+import { AudioEngine } from '../utils/audioEngine';
 
 interface PlayScreenProps {
   space: Space;
@@ -27,6 +28,13 @@ interface PlayScreenProps {
 }
 
 type PanelTab = 'songs' | 'ambience';
+
+const MUSIC_EFFECTS = [
+  { id: 'surround', label: '环绕', icon: 'Orbit' },
+  { id: 'bass', label: '重低音', icon: 'AudioLines' },
+  { id: 'reverb', label: '空间', icon: 'Waves' },
+  { id: 'night', label: '柔化', icon: 'Moon' },
+];
 
 interface PlaylistItem {
   id: string;
@@ -80,6 +88,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   const [panelOpen, setPanelOpen] = useState(false);
   const [favorite, setFavorite] = useState(false);
   const [showChrome, setShowChrome] = useState(true);
+  const [activeEffects, setActiveEffects] = useState<string[]>([]);
 
   const activeSong = songs.find(song => song.id === activeSongId) || songs[0];
   const activePlaylist = PLAYLISTS.find(playlist => playlist.id === activePlaylistId) || PLAYLISTS[4];
@@ -121,6 +130,14 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     const currentIdx = songPool.findIndex(song => song.id === activeSongId);
     const prevSong = songPool[(currentIdx - 1 + songPool.length) % songPool.length];
     onSelectSong(prevSong.id);
+  };
+
+  const toggleMusicEffect = async (effectId: string) => {
+    const nextEnabled = !activeEffects.includes(effectId);
+    setActiveEffects(prev =>
+      nextEnabled ? [...prev, effectId] : prev.filter(id => id !== effectId)
+    );
+    await AudioEngine.setMusicEffect(effectId, nextEnabled);
   };
 
   return (
@@ -194,10 +211,10 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 28 }}
-            className="fixed left-0 right-0 bottom-[200px] max-w-md mx-auto z-40 px-4"
+            className="fixed left-0 right-0 bottom-[230px] max-w-md mx-auto z-40 px-4"
             onClick={event => event.stopPropagation()}
           >
-            <div className="max-h-[54vh] overflow-hidden rounded-3xl border border-white/18 bg-transparent shadow-[0_22px_52px_rgba(0,0,0,0.22)]">
+            <div className="max-h-[54vh] overflow-hidden rounded-3xl border border-white/18 bg-transparent backdrop-blur-sm shadow-[0_22px_52px_rgba(0,0,0,0.22)]">
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/10">
                 <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
                   {[
@@ -281,6 +298,36 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
 
                 {activeTab === 'ambience' && (
                   <div className="flex flex-col gap-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5">
+                          <LucideIcon name="SlidersHorizontal" className="text-cyan-300" size={12} />
+                          音效增强
+                        </span>
+                        <span className="text-[9px] text-zinc-500 font-mono">{activeEffects.length}/4</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {MUSIC_EFFECTS.map(effect => {
+                          const active = activeEffects.includes(effect.id);
+                          return (
+                            <button
+                              key={effect.id}
+                              type="button"
+                              onClick={() => toggleMusicEffect(effect.id)}
+                              className={`h-14 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-all ${
+                                active
+                                  ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-200'
+                                  : 'border-white/10 bg-transparent text-zinc-400 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <LucideIcon name={effect.icon} size={15} />
+                              <span>{effect.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
                       <div className="flex items-center justify-between text-xs mb-2">
                         <span className="text-zinc-200 font-semibold flex items-center gap-1.5">
@@ -364,7 +411,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
           </div>
         )}
 
-        <div className="rounded-3xl bg-transparent border border-white/20 shadow-[0_18px_42px_rgba(0,0,0,0.2)] overflow-hidden">
+        <div className="rounded-3xl bg-transparent backdrop-blur-sm border border-white/20 shadow-[0_18px_42px_rgba(0,0,0,0.2)] overflow-hidden">
           <button
             type="button"
             onClick={() => setPanelOpen(prev => !prev)}
@@ -375,7 +422,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
           </button>
 
           <div className="px-4 pb-3">
-            <div className="h-8 mb-2 overflow-hidden">
+            <div className="h-8 mb-1  overflow-hidden">
               <VisualBeat isPlaying={isPlaying} freqData={freqData} colorTheme="ocean" compact />
             </div>
 

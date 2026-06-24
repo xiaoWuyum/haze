@@ -70,7 +70,7 @@ export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, col
   const activeBars = freqData && freqData.length > 0 ? freqData.slice(0, 32) : mockFreqs;
 
   return (
-    <div ref={containerRef} className={`w-full flex items-end justify-center ${compact ? 'gap-[3px] h-8 px-1' : 'gap-[4px] h-28 px-4'} opacity-85`}>
+    <div ref={containerRef} className={`w-full max-w-none flex items-end justify-center ${compact ? 'gap-[2px] h-8 px-0' : 'gap-[5px] h-32 px-1'} opacity-85`}>
       {activeBars.map((val, idx) => {
         // Normalize val from 0-255 (if analyzer output) or 0-100 (if mock)
         const isRawAnalyzer = freqData && freqData.length > 0;
@@ -82,7 +82,7 @@ export const VisualBeat: React.FC<VisualBeatProps> = ({ isPlaying, freqData, col
         return (
           <div
             key={idx}
-            className={`${compact ? 'w-[3px]' : 'w-[6px] md:w-[8px]'} rounded-t-full transition-all duration-75 ${colors.barBg} shadow-[0_0_12px_var(--tw-shadow-color)]`}
+            className={`${compact ? 'w-[5px]' : 'w-[15px] md:w-20px]'} rounded-t-full transition-all duration-75 ${colors.barBg} shadow-[0_0_12px_var(--tw-shadow-color)]`}
             style={{
               height: `${scaleHeight}%`,
               opacity: 0.35 + (rawPercent * 0.65),
