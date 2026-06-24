@@ -197,7 +197,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
             className="fixed left-0 right-0 bottom-[200px] max-w-md mx-auto z-40 px-4"
             onClick={event => event.stopPropagation()}
           >
-            <div className="max-h-[54vh] overflow-hidden rounded-3xl border border-white/10 bg-black/55 backdrop-blur-2xl shadow-2xl">
+            <div className="max-h-[54vh] overflow-hidden rounded-3xl border border-white/18 bg-transparent shadow-[0_22px_52px_rgba(0,0,0,0.22)]">
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/10">
                 <div className="flex items-center gap-1 rounded-full bg-white/5 p-1">
                   {[
@@ -260,7 +260,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                             onClick={() => onSelectSong(song.id)}
                             className={`flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${
                               current
-                                ? 'bg-emerald-400/10 border-emerald-400/30'
+                                ? 'bg-emerald-400/12 border-emerald-400/30'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'
                             }`}
                           >
@@ -303,7 +303,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                       <div
                         key={sound.id}
                         className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-                          sound.isPlaying ? 'bg-white/8 border-white/15' : 'bg-white/5 border-white/10 opacity-60'
+                          sound.isPlaying ? 'bg-white/10 border-white/18' : 'bg-white/5 border-white/10 opacity-60'
                         }`}
                       >
                         <button
@@ -342,7 +342,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
       </AnimatePresence>
 
       <div
-        className="fixed bottom-[82px] left-0 right-0 max-w-md mx-auto z-50 px-4 pb-5 pt-6 bg-gradient-to-t from-black via-black/85 to-transparent"
+        className="fixed bottom-[82px] left-0 right-0 max-w-md mx-auto z-50 px-4 pb-5 pt-6"
         onClick={event => event.stopPropagation()}
       >
         {!panelOpen && activeAmbients.length > 0 && (
@@ -364,11 +364,11 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
           </div>
         )}
 
-        <div className="rounded-3xl bg-zinc-950/85 border border-white/10 backdrop-blur-2xl shadow-2xl overflow-hidden">
+        <div className="rounded-3xl bg-transparent border border-white/20 shadow-[0_18px_42px_rgba(0,0,0,0.2)] overflow-hidden">
           <button
             type="button"
             onClick={() => setPanelOpen(prev => !prev)}
-            className="w-full h-7 flex items-center justify-center text-zinc-500 hover:text-zinc-200"
+            className="w-full h-7 flex items-center justify-center text-white/50 hover:text-white/80"
             title={panelOpen ? '收起控制面板' : '展开控制面板'}
           >
             <LucideIcon name={panelOpen ? 'ChevronDown' : 'ChevronUp'} size={16} />
@@ -398,7 +398,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                 <button
                   type="button"
                   onClick={handlePrevSong}
-                  className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-white active:scale-95 transition-all"
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-transparent hover:bg-white/10 border border-white/10 text-white active:scale-95 transition-all"
                   title="上一首"
                 >
                   <LucideIcon name="SkipBack" size={15} />
@@ -414,7 +414,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                 <button
                   type="button"
                   onClick={handleNextSong}
-                  className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-white active:scale-95 transition-all"
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-transparent hover:bg-white/10 border border-white/10 text-white active:scale-95 transition-all"
                   title="下一首"
                 >
                   <LucideIcon name="SkipForward" size={15} />

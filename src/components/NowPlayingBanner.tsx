@@ -25,10 +25,10 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.99 }}
         onClick={onOpenPlayer}
-        className="flex items-center justify-between p-3 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl cursor-pointer select-none"
+        className="flex items-center justify-between p-3 bg-transparent border border-white/20 rounded-2xl shadow-[0_18px_38px_rgba(0,0,0,0.18)] cursor-pointer select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative w-11 h-11 rounded-full flex items-center justify-center bg-black overflow-hidden shadow-md border border-white/10 shrink-0">
+          <div className="relative w-11 h-11 rounded-full flex items-center justify-center bg-transparent overflow-hidden shadow-md border border-white/15 shrink-0">
             <motion.img
               src={song.coverUrl}
               alt={song.title}
@@ -37,7 +37,7 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
               className="w-10 h-10 rounded-full object-cover"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute w-3 h-3 rounded-full bg-zinc-950 border-2 border-zinc-900 inset-0 m-auto" />
+            <div className="absolute w-3 h-3 rounded-full bg-black/75 border-2 border-white/10 inset-0 m-auto" />
           </div>
           <div className="min-w-0 text-left">
             <h4 className="font-semibold text-white text-[13px] leading-tight truncate flex items-center gap-1.5">
@@ -58,7 +58,7 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
           <button
             type="button"
             onClick={onTogglePlay}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800/90 hover:bg-zinc-700 border border-white/10 text-white active:scale-95 transition-all"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent hover:bg-white/10 border border-white/15 text-white active:scale-95 transition-all"
             title={isPlaying ? '暂停' : '继续播放'}
           >
             <LucideIcon name={isPlaying ? 'Pause' : 'Play'} size={15} />
@@ -66,7 +66,7 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
           <button
             type="button"
             onClick={onNextSong}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800/90 hover:bg-zinc-700 border border-white/10 text-white active:scale-95 transition-all"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent hover:bg-white/10 border border-white/15 text-white active:scale-95 transition-all"
             title="下一首"
           >
             <LucideIcon name="SkipForward" size={15} />
