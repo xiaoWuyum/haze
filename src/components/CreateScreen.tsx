@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RECOMMENDER_LOGS, SCENE_TAGS } from '../utils/sceneRecommender';
 import { getSceneRecommendation } from '../utils/sceneAiClient';
 import { type VideoGenerationJob } from '../utils/videoGenerationClient';
+import meAvatarUrl from '../picture/me.jpeg';
 
 interface CreateScreenProps {
   songs: Song[];
@@ -24,6 +25,7 @@ interface CreateScreenProps {
 }
 
 const DEFAULT_SCENE_IMAGE = 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&auto=format&fit=crop&q=80';
+const PROMPT_PRESETS = ['东京雨夜', '温暖壁炉', '海边午后', '深空漂流'];
 
 export const CreateScreen: React.FC<CreateScreenProps> = ({
   songs,
@@ -140,10 +142,15 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
   };
 
   return (
-    <div className="w-full px-6 pt-8 pb-32 max-w-md mx-auto relative">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white tracking-wide font-sans">创建空间</h1>
-        <p className="text-xs text-zinc-400 mt-1.5">调配你的奇幻氛围，定义每首歌的专属时空</p>
+    <div className="w-full px-6 pt-8 pb-32 max-w-md mx-auto relative create-studio">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-wide font-sans">创建空间</h1>
+          <p className="text-xs text-zinc-400 mt-1.5">调配画面、音乐和环境音，生成你的沉浸场景</p>
+        </div>
+        <div className="h-10 w-10 overflow-hidden rounded-full border border-white/15 bg-zinc-900 shadow-md shrink-0">
+          <img src={meAvatarUrl} alt="我的头像" className="h-full w-full object-cover" />
+        </div>
       </div>
 
       <AnimatePresence>
@@ -164,9 +171,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
       </AnimatePresence>
 
       {/* NEW: Interactive AI Prompt Enhancement Terminal Section */}
-      <div className="mb-6 p-5 rounded-2xl bg-zinc-900/40 border border-cyan-500/10 backdrop-blur-md flex flex-col gap-3.5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-        
+      <div className="create-silk-panel mb-6 p-5 rounded-2xl border border-cyan-300/15 flex flex-col gap-3.5 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 relative">
@@ -175,11 +180,10 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
             </span>
             <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400">AI Scene Studio</h3>
           </div>
+          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] font-mono text-zinc-400">
+            {isGenerating ? 'SYNC' : 'READY'}
+          </span>
         </div>
-
-        <p className="text-[10px] text-zinc-400 leading-relaxed">
-          输入一个简单的词汇或梦境描述，由系统帮助您扩写。
-        </p>
 
         <div className="flex flex-col gap-2">
           <textarea
@@ -188,13 +192,25 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
             onChange={(e) => setUserInput(e.target.value)}
             disabled={isGenerating}
             rows={2}
-            className="w-full px-3 py-2.5 bg-black/50 border border-white/5 disabled:opacity-50 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500/30 transition-all font-sans leading-relaxed text-left resize-none"
+            className="w-full px-3 py-3 bg-black/35 border border-white/10 disabled:opacity-50 rounded-xl text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-400/40 transition-all font-sans leading-relaxed text-left resize-none shadow-inner"
           />
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {PROMPT_PRESETS.map(preset => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setUserInput(preset)}
+                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-semibold text-zinc-300 hover:border-cyan-300/30 hover:text-cyan-200 transition-colors"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={handleAIEnhance}
             disabled={isGenerating || !userInput.trim()}
-            className="w-full py-2 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50 disabled:opacity-40 disabled:hover:bg-cyan-950/80 text-[10px] font-bold tracking-wider hover:text-white flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all"
+            className="w-full py-2.5 rounded-xl bg-cyan-300 text-black border border-cyan-100/40 hover:bg-cyan-200 disabled:opacity-40 disabled:hover:bg-cyan-300 text-[10px] font-bold tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition-all shadow-[0_10px_28px_rgba(34,211,238,0.16)]"
           >
             <LucideIcon name="Sparkles" size={11} className={isGenerating ? "animate-spin" : ""} />
             <span>{isGenerating ? "正在通过 AI 增强管道解析中..." : "智能增强，适配画幅与大自然音"}</span>
@@ -203,7 +219,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
 
         {/* Dynamic Logging Feed */}
         {genLogs.length > 0 && (
-          <div className="p-3 rounded-lg bg-black/60 border border-white/5 font-mono text-[9px] text-cyan-500/90 leading-relaxed text-left max-h-32 overflow-y-auto flex flex-col gap-1 shadow-inner">
+          <div className="p-3 rounded-xl bg-black/45 border border-cyan-300/10 font-mono text-[9px] text-cyan-300/90 leading-relaxed text-left max-h-32 overflow-y-auto flex flex-col gap-1 shadow-inner">
             {genLogs.map((log, index) => (
               <div key={index} className="flex gap-1.5 items-start">
                 <span className="text-zinc-600 font-bold">›</span>
@@ -224,7 +240,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-xs text-cyan-300 flex flex-col gap-1.5 text-left"
+            className="p-3 rounded-xl bg-black/25 border border-cyan-300/20 text-xs text-cyan-300 flex flex-col gap-1.5 text-left"
           >
             <div className="flex items-center gap-1.5 leading-none">
               <LucideIcon name="PartyPopper" size={11} className="text-cyan-400" />
@@ -300,7 +316,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">场景参数详情与人工微调</h4>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 bg-zinc-900/40 p-5 rounded-2xl border border-white/5 backdrop-blur-md">
+      <form onSubmit={handleSubmit} className="create-control-panel flex flex-col gap-5 p-5 rounded-2xl border border-white/10">
         
         {/* 1. Name Input */}
         <div className="flex flex-col gap-1.5">

@@ -8,6 +8,7 @@ import { Space } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { motion, AnimatePresence } from 'motion/react';
 import MagicBento from './MagicBento';
+import meAvatarUrl from '../picture/me.jpeg';
 
 interface PlazaScreenProps {
   spaces: Space[];
@@ -246,8 +247,8 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
           >
             <LucideIcon name="Search" size={18} />
           </button>
-          <div className="w-10 h-10 rounded-full bg-indigo-950/80 border border-indigo-500/30 flex items-center justify-center font-bold text-sm text-indigo-300 select-none">
-            Sx
+          <div className="w-10 h-10 rounded-full border border-white/15 overflow-hidden bg-zinc-900 shadow-md select-none">
+            <img src={meAvatarUrl} alt="我的头像" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>

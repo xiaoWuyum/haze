@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Space, Song, AmbientSound } from '../types';
 import { LucideIcon } from './LucideIcon';
 import { VisualBeat } from './VisualBeat';
@@ -13,6 +13,7 @@ import { AudioEngine } from '../utils/audioEngine';
 
 interface PlayScreenProps {
   space: Space;
+  spaces: Space[];
   songs: Song[];
   songVolume: number;
   activeSongId: string;
@@ -24,6 +25,8 @@ interface PlayScreenProps {
   onSetAmbientVolume: (soundId: string, vol: number) => void;
   onToggleAmbientSound: (soundId: string) => void;
   onSelectSong: (songId: string) => void;
+  onSelectSpace: (space: Space) => void;
+  onImmersiveChange?: (immersive: boolean) => void;
   onClose: () => void;
 }
 
@@ -70,6 +73,7 @@ const PLAYLISTS: PlaylistItem[] = [
 
 export const PlayScreen: React.FC<PlayScreenProps> = ({
   space,
+  spaces,
   songs,
   songVolume,
   activeSongId,
@@ -81,6 +85,8 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   onSetAmbientVolume,
   onToggleAmbientSound,
   onSelectSong,
+  onSelectSpace,
+  onImmersiveChange,
   onClose,
 }) => {
   const [activePlaylistId, setActivePlaylistId] = useState('city');
@@ -88,7 +94,10 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   const [panelOpen, setPanelOpen] = useState(false);
   const [favorite, setFavorite] = useState(false);
   const [showChrome, setShowChrome] = useState(true);
+  const [immersiveMode, setImmersiveMode] = useState(false);
   const [activeEffects, setActiveEffects] = useState<string[]>([]);
+  const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const playerBarSwipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const activeSong = songs.find(song => song.id === activeSongId) || songs[0];
   const activePlaylist = PLAYLISTS.find(playlist => playlist.id === activePlaylistId) || PLAYLISTS[4];
@@ -107,7 +116,93 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     return () => window.clearTimeout(timeout);
   }, [showChrome, panelOpen]);
 
-  const revealChrome = () => setShowChrome(true);
+  useEffect(() => {
+    onImmersiveChange?.(immersiveMode);
+    if (immersiveMode) {
+      setPanelOpen(false);
+      setShowChrome(false);
+    }
+
+    return () => {
+      onImmersiveChange?.(false);
+    };
+  }, [immersiveMode, onImmersiveChange]);
+
+  const revealChrome = () => {
+    if (immersiveMode) {
+      setImmersiveMode(false);
+      setShowChrome(true);
+      return;
+    }
+
+    setShowChrome(true);
+  };
+
+  const switchSpaceByOffset = (offset: number) => {
+    if (spaces.length < 2) return;
+    const currentIdx = spaces.findIndex(item => item.id === space.id);
+    const safeCurrentIdx = currentIdx >= 0 ? currentIdx : 0;
+    const nextSpace = spaces[(safeCurrentIdx + offset + spaces.length) % spaces.length];
+    if (nextSpace.id === space.id) return;
+
+    setPanelOpen(false);
+    setShowChrome(true);
+    onSelectSpace(nextSpace);
+  };
+
+  const isInteractiveSwipeTarget = (target: EventTarget | null) => {
+    if (!(target instanceof Element)) return false;
+    return !!target.closest('button, input, a, [role="button"]');
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (panelOpen || isInteractiveSwipeTarget(event.target)) return;
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: Date.now(),
+    };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || panelOpen || isInteractiveSwipeTarget(event.target)) return;
+
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    const isBigHorizontalSwipe = Math.abs(dx) >= 96 && Math.abs(dx) > Math.abs(dy) * 1.25 && elapsed <= 900;
+
+    if (!isBigHorizontalSwipe) return;
+    switchSpaceByOffset(dx < 0 ? 1 : -1);
+  };
+
+  const handlePlayerBarPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    if (isInteractiveSwipeTarget(event.target)) return;
+    playerBarSwipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: Date.now(),
+    };
+  };
+
+  const handlePlayerBarPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const start = playerBarSwipeStartRef.current;
+    playerBarSwipeStartRef.current = null;
+    if (!start || isInteractiveSwipeTarget(event.target)) return;
+
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    const isBarSwipe = Math.abs(dx) >= 72 && Math.abs(dx) > Math.abs(dy) * 1.2 && elapsed <= 900;
+    if (!isBarSwipe) return;
+
+    setPanelOpen(false);
+    setImmersiveMode(true);
+  };
 
   const toggleFavorite = () => {
     const favorites = readJson<string[]>('saved_space_favorites', []);
@@ -143,7 +238,14 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   return (
     <div
       className="absolute inset-0 bg-black z-40 overflow-hidden flex flex-col focus:outline-none select-none"
+      style={{ touchAction: panelOpen ? 'auto' : 'pan-y' }}
       onClick={revealChrome}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        swipeStartRef.current = null;
+        playerBarSwipeStartRef.current = null;
+      }}
     >
       <div className="absolute inset-0 z-0 overflow-hidden bg-black">
         {space.videoUrl ? (
@@ -171,7 +273,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
       </div>
 
       <AnimatePresence>
-        {showChrome && (
+        {showChrome && !immersiveMode && (
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -206,7 +308,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
       </AnimatePresence>
 
       <AnimatePresence>
-        {panelOpen && (
+        {panelOpen && !immersiveMode && (
           <motion.div
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
@@ -253,7 +355,6 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                           type="button"
                           onClick={() => {
                             setActivePlaylistId(playlist.id);
-                            onSelectSong(playlist.songs[0]);
                           }}
                           className={`px-3 py-2 rounded-xl text-left shrink-0 border transition-colors ${
                             activePlaylistId === playlist.id
@@ -388,8 +489,13 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
         )}
       </AnimatePresence>
 
-      <div
+      <AnimatePresence>
+        {!immersiveMode && (
+          <motion.div
         className="fixed bottom-[82px] left-0 right-0 max-w-md mx-auto z-50 px-4 pb-5 pt-6"
+        initial={{ opacity: 0, y: 22 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 28 }}
         onClick={event => event.stopPropagation()}
       >
         {!panelOpen && activeAmbients.length > 0 && (
@@ -411,7 +517,15 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
           </div>
         )}
 
-        <div className="rounded-3xl bg-transparent backdrop-blur-sm border border-white/20 shadow-[0_18px_42px_rgba(0,0,0,0.2)] overflow-hidden">
+        <div
+          className="rounded-3xl bg-transparent backdrop-blur-sm border border-white/20 shadow-[0_18px_42px_rgba(0,0,0,0.2)] overflow-hidden"
+          onPointerDown={handlePlayerBarPointerDown}
+          onPointerUp={handlePlayerBarPointerUp}
+          onPointerCancel={event => {
+            event.stopPropagation();
+            playerBarSwipeStartRef.current = null;
+          }}
+        >
           <button
             type="button"
             onClick={() => setPanelOpen(prev => !prev)}
@@ -470,7 +584,9 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { ProfileScreen } from './components/ProfileScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { NowPlayingBanner } from './components/NowPlayingBanner';
 import { VideoGenerationToast } from './components/VideoGenerationToast';
+import { FluidGlassNavEffect } from './components/FluidGlassNavEffect';
 import { motion, AnimatePresence } from 'motion/react';
 import { readJson, readNumber, removeStoredValue, writeJson, writeNumber } from './utils/storage';
 import { getVideoGenerationJob, requestVideoGeneration, type VideoGenerationJob } from './utils/videoGenerationClient';
@@ -36,6 +37,8 @@ export default function App() {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState('');
   const [videoError, setVideoError] = useState('');
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [navLens, setNavLens] = useState({ x: 0, y: 0, visible: false });
+  const [playImmersive, setPlayImmersive] = useState(false);
   
   // Analyser frequencies
   const [freqData, setFreqData] = useState<number[]>([]);
@@ -368,6 +371,7 @@ export default function App() {
           {activeTab === 'play' && activeSpace && (
             <PlayScreen
               space={activeSpace}
+              spaces={spaces}
               songs={SONGS}
               songVolume={songVolume}
               activeSongId={activeSongId}
@@ -379,6 +383,8 @@ export default function App() {
               onSetAmbientVolume={handleSetAmbientVolume}
               onToggleAmbientSound={handleToggleAmbientSound}
               onSelectSong={handleSelectSong}
+              onSelectSpace={selectSpaceAction}
+              onImmersiveChange={setPlayImmersive}
               onClose={() => setActiveTab('plaza')}
             />
           )}
@@ -429,14 +435,36 @@ export default function App() {
               onNextSong={handleNextSong}
             />
           )}
+          {!(activeTab === 'play' && playImmersive) && (
           <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-[70] px-5 pb-5 pt-7 bg-gradient-to-t from-black/20 via-black/5 to-transparent">
             <div
               style={{ contentVisibility: 'auto' }}
+              onPointerMove={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setNavLens({
+                  x: event.clientX - rect.left,
+                  y: event.clientY - rect.top,
+                  visible: true,
+                });
+              }}
+              onPointerLeave={() => setNavLens(prev => ({ ...prev, visible: false }))}
               className="relative h-[64px] overflow-hidden rounded-[24px] border border-white/30 bg-white/[0.075] shadow-[0_14px_38px_rgba(0,0,0,0.22),inset_0_1px_1px_rgba(255,255,255,0.42)] backdrop-blur-2xl"
             >
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.28),rgba(255,255,255,0.045)_36%,rgba(255,255,255,0.015)_66%,rgba(190,240,255,0.11))]" />
               <div className="pointer-events-none absolute left-5 right-5 top-0 h-px bg-white/50" />
               <div className="pointer-events-none absolute inset-x-10 bottom-0 h-px bg-cyan-100/15" />
+              <motion.div
+                className="fluid-nav-lens pointer-events-none absolute z-0 h-16 w-16 -translate-x-1/2 -translate-y-1/2"
+                animate={{
+                  x: navLens.x,
+                  y: navLens.y,
+                  opacity: navLens.visible ? 1 : 0,
+                  scale: navLens.visible ? 1 : 0.72,
+                }}
+                transition={{ type: 'spring', stiffness: 360, damping: 34, mass: 0.7 }}
+              >
+                <FluidGlassNavEffect />
+              </motion.div>
               <div className="relative grid h-full grid-cols-5 p-1.5">
                 {navItems.map(item => {
                   const isActive = activeTab === item.id;
@@ -452,15 +480,6 @@ export default function App() {
                         isActive ? 'text-white' : 'text-white/62 hover:text-white'
                       }`}
                     >
-                      {isActive && (
-                        <motion.div
-                          layoutId="active-bottom-nav-glass"
-                          transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                          className="absolute inset-0 rounded-[20px] border border-white/35 bg-white/[0.16] shadow-[0_10px_24px_rgba(255,255,255,0.08),inset_0_1px_1px_rgba(255,255,255,0.46)]"
-                        >
-                          <span className="absolute left-1/2 top-1 h-1 w-5 -translate-x-1/2 rounded-full bg-white/55" />
-                        </motion.div>
-                      )}
                       <span className="relative z-10 flex h-4 w-4 items-center justify-center">
                         <LucideIcon name={item.icon} size={iconSize} />
                         {item.id === 'play' && isPlaying && (
@@ -474,6 +493,7 @@ export default function App() {
               </div>
             </div>
           </div>
+          )}
         </>
 
       </div>
