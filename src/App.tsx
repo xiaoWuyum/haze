@@ -285,7 +285,7 @@ export default function App() {
     try {
       const job = await requestVideoGeneration({ 
         prompt,
-        model: 'doubao-seedance-1-0-pro-fast-251015'
+        model: 'doubao-seedance-1-5-pro-251215'
       });
       setVideoJob(job);
 
