@@ -12,17 +12,7 @@ A Vite + React + TypeScript ambient music prototype.
 ```powershell
 npm install
 npm run dev
-```
 
-Open the local Vite URL:
-
-```text
-http://localhost:3000/
-```
-
-To enable Gemini-backed scene recommendations during development, run the API server in a second terminal:
-
-```powershell
 npm run dev:api
 ```
 

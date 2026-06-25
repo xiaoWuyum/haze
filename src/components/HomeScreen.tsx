@@ -61,7 +61,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           src={tvUrl}
           alt=""
           aria-hidden="true"
-          className="home-float home-float-1 home-tv-img"
+          className="home-float home-float-1 home-tv-img drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
         />
       </motion.button>
 
@@ -76,7 +76,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           src={mp3Url}
           alt=""
           aria-hidden="true"
-          className="home-float home-float-2 home-mp3-img"
+          className="home-float home-float-2 home-mp3-img drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
         />
       </motion.button>
 
