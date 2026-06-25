@@ -35,6 +35,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         className="home-background"
       />
 
+      {/* 像素风标题 */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="absolute top-[15%] left-0 right-0 z-10 flex flex-col items-center justify-center pointer-events-none"
+      >
+        <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] tracking-wider" style={{ fontFamily: "'Courier New', monospace", textShadow: '4px 4px 0px #000, -2px -2px 0 #ff6b9d' }}>
+          觅镜
+        </h1>
+        <p className="mt-3 text-sm sm:text-base text-white/80 tracking-[0.3em]" style={{ fontFamily: "'Courier New', monospace", textShadow: '2px 2px 0px #000' }}>
+          在某个频率里，等你
+        </p>
+      </motion.div>
+
       <motion.button
         type="button"
         onClick={onOpenPlaza}

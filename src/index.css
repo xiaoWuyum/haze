@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* 像素字体 */
+@font-face {
+  font-family: 'HYPixel';
+  src: url('/font/HYPixel11pxU-2.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .magic-bento-item {
   position: relative;
   isolation: isolate;
