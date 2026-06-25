@@ -213,9 +213,20 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
   const reset = () => {
     clearTimers();
     setStage('signal');
+    setSignal('');
     setStreamLines([]);
     setLoadProgress(0);
     setSaved(false);
+  };
+
+  const handlePublishAndReset = (title: string, description: string) => {
+    onPublishGeneratedVideo(title, description);
+    reset();
+  };
+
+  const handlePlayAndReset = (title: string, description: string) => {
+    onPlayGeneratedVideo(title, description);
+    reset();
   };
 
   const saveWorld = () => {
@@ -494,7 +505,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
                     </div>
                   </div>
                   <p className="mt-3 text-[11px] leading-5 text-white/45">
-                    将上面编辑好的标题与场景描述交给 AI 渲染 5s 循环背景。
+                    将上面编辑好的标题与场景描述交给 AI 渲染背景背景。
                   </p>
                   <button
                     type="button"
@@ -529,8 +540,8 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
             onDismissVideoOverlay();
           }}
           onRegenerate={() => onGenerateVideo(buildVideoPrompt(editedTitle, editedScene))}
-          onPublishToPlaza={() => onPublishGeneratedVideo(editedTitle.trim() || blueprint.name, editedScene.trim() || blueprint.firstScene)}
-          onPlayInScene={() => onPlayGeneratedVideo(editedTitle.trim() || blueprint.name, editedScene.trim() || blueprint.firstScene)}
+          onPublishToPlaza={handlePublishAndReset}
+          onPlayInScene={handlePlayAndReset}
         />
       )}
     </div>

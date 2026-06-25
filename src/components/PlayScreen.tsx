@@ -499,7 +499,20 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                               : 'bg-white/5 border-white/10 hover:bg-white/10'
                           }`}
                         >
-                          <img src={sp.bgImage} alt={sp.title} className="w-12 h-12 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                            {sp.videoUrl ? (
+                              <video
+                                src={sp.videoUrl}
+                                muted
+                                autoPlay
+                                loop
+                                playsInline
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <img src={sp.bgImage} alt={sp.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <h5 className={`text-xs font-bold truncate ${current ? 'text-purple-300' : 'text-white'}`}>{sp.title}</h5>
                             <p className="text-[10px] text-zinc-500 truncate mt-0.5">{sp.tag ? `${sp.tag} · ${sp.creator}` : sp.creator}</p>

@@ -18,8 +18,8 @@ interface CinemaPipelineOverlayProps {
   isGenerating: boolean;
   onClose: () => void;
   onRegenerate: () => void;
-  onPublishToPlaza: () => void;
-  onPlayInScene: () => void;
+  onPublishToPlaza: (title: string, description: string) => void;
+  onPlayInScene: (title: string, description: string) => void;
 }
 
 const RENDER_PHASES = [
@@ -47,6 +47,7 @@ export const CinemaPipelineOverlay: React.FC<CinemaPipelineOverlayProps> = ({
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [editedTitle, setEditedTitle] = useState(title);
 
   const status = job?.status || (errorMessage ? 'failed' : 'queued');
   const isCompleted = status === 'completed' && !!videoUrl;
@@ -165,14 +166,14 @@ export const CinemaPipelineOverlay: React.FC<CinemaPipelineOverlayProps> = ({
                       {isFailed ? '生成未成功' : title || '正在渲染场景'}
                     </h3>
                     <p className="mx-auto max-w-[80%] text-sm leading-relaxed text-white/50">
-                      {isFailed ? errorMessage : '正在将你的想象转化为 5s 循环视觉体验...'}
+                      {isFailed ? errorMessage : '正在将你的想象转化为视觉体验...'}
                     </p>
                   </div>
 
                   {/* Cinematic Hint moved up */}
                   <div className="opacity-40">
                     <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-white">
-                      Cinematic · 5s Seamless Loop · 720x1280
+                      Cinematic · Seamless Loop · 720x1280
                     </p>
                   </div>
 
@@ -273,7 +274,11 @@ export const CinemaPipelineOverlay: React.FC<CinemaPipelineOverlayProps> = ({
                   <div className="space-y-4">
                     <div className="space-y-2">
                       {/* <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-violet-300/80">World Premiere</p> */}
-                      <h2 className="text-3xl font-bold text-white drop-shadow-2xl">{title}</h2>
+                      <input
+                        value={editedTitle}
+                        onChange={(e) => setEditedTitle(e.target.value)}
+                        className="w-full bg-transparent text-3xl font-bold text-white drop-shadow-2xl outline-none"
+                      />
                       {subtitle && <p className="max-w-[90%] text-sm leading-relaxed text-white/70 drop-shadow-md">{subtitle}</p>}
                     </div>
                   </div>
@@ -283,14 +288,14 @@ export const CinemaPipelineOverlay: React.FC<CinemaPipelineOverlayProps> = ({
               {/* Bottom Actions for Completed State */}
               <div className="bottom-33 relative z-10 grid grid-cols-2 gap-4  px-6 py-8">
                 <button
-                  onClick={onPublishToPlaza}
+                  onClick={() => onPublishToPlaza(editedTitle, subtitle)}
                   className="flex h-10 items-center justify-center gap-2 rounded-2xl border border-violet-400/30 bg-violet-500/10 text-sm font-bold uppercase tracking-widest text-violet-100 transition hover:bg-violet-500/20 active:scale-[0.98]"
                 >
                   <LucideIcon name="Send" size={18} />
                   发布到广场
                 </button>
                 <button
-                  onClick={onPlayInScene}
+                  onClick={() => onPlayInScene(editedTitle, subtitle)}
                   className="flex h-10 items-center justify-center gap-3 rounded-2xl bg-violet-100 text-sm font-bold uppercase tracking-widest text-black transition hover:bg-white active:scale-[0.98]"
                 >
                   <LucideIcon name="Play" size={18} />
