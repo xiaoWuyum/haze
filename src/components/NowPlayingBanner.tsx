@@ -6,6 +6,7 @@ import { LucideIcon } from './LucideIcon';
 interface NowPlayingBannerProps {
   song: Song;
   isPlaying: boolean;
+  variant?: 'default' | 'home';
   onOpenPlayer: () => void;
   onTogglePlay: () => void;
   onNextSong: () => void;
@@ -14,18 +15,21 @@ interface NowPlayingBannerProps {
 export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
   song,
   isPlaying,
+  variant = 'default',
   onOpenPlayer,
   onTogglePlay,
   onNextSong,
 }) => {
+  const bottomClass = variant === 'home' ? 'bottom-6' : 'bottom-[86px]';
+
   return (
-    <div className="fixed bottom-[86px] left-0 right-0 max-w-md mx-auto z-40 px-5">
+    <div className={`fixed ${bottomClass} left-0 right-0 max-w-md mx-auto z-40 px-5`}>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.99 }}
         onClick={onOpenPlayer}
-        className="flex items-center justify-between p-3 bg-transparent backdrop-blur-sm border border-white/20 rounded-2xl shadow-[0_18px_38px_rgba(0,0,0,0.18)] cursor-pointer select-none"
+        className="flex items-center justify-between p-3 bg-black/18 backdrop-blur-md border border-white/20 rounded-2xl shadow-[0_18px_38px_rgba(0,0,0,0.18),0_0_32px_rgba(103,232,249,0.12)] cursor-pointer select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-11 h-11 rounded-full flex items-center justify-center bg-transparent overflow-hidden shadow-md border border-white/15 shrink-0">
