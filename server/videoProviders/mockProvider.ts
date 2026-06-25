@@ -1,4 +1,4 @@
-import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types';
+import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types.js';
 
 interface MockJobRecord {
   createdAt: number;

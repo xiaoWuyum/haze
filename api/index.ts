@@ -1,14 +1,21 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { GoogleGenAI, Type } from '@google/genai';
 import { recommendScene } from '../src/utils/sceneRecommender.js';
 import { ensureDirectedVideoPrompt } from '../src/utils/videoPromptDirector.js';
 import { createVideoProvider } from '../server/videoProviders/index.js';
 
-const SONGS = JSON.parse(readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../src/data/catalog.json'), 'utf8'));
+// In Vercel, we need to resolve the path relative to the function root
+const SONGS_PATH = path.join(process.cwd(), 'src/data/catalog.json');
+let SONGS: any[] = [];
+try {
+  const content = readFileSync(SONGS_PATH, 'utf8');
+  SONGS = JSON.parse(content);
+} catch (err) {
+  console.error('Failed to read catalog.json at', SONGS_PATH, err);
+}
 
 const app = express();
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -30,7 +37,7 @@ const VIDEO_PROMPT_DIRECTOR_RULES = [
   'videoPrompt 结尾必须一字不差加上：Seamless 5-second loop. Static camera, no pan or zoom. No moving subjects, ambient motion only. NO text, letters, numbers, words, signs, symbols, watermarks or logos of any kind. 4K cinematic quality.',
 ].join('\n');
 
-function normalizeRecommendation(value, fallback) {
+function normalizeRecommendation(value: any, fallback: any) {
   const validBackgroundIds = new Set(['cyberpunk', 'cabin', 'space', 'beach', 'rainforest', 'snowpeak']);
   const validSongIds = new Set(SONGS.map(song => song.id));
   const validSoundIds = new Set(['rain', 'waves', 'fire', 'crickets', 'space', 'wind', 'vinyl']);
@@ -56,11 +63,11 @@ function normalizeRecommendation(value, fallback) {
   };
 }
 
-function includesAny(text, keywords) {
+function includesAny(text: string, keywords: string[]) {
   return keywords.some(keyword => text.includes(keyword));
 }
 
-function sanitizeRecommendationForInput(input, recommendation) {
+function sanitizeRecommendationForInput(input: string, recommendation: any) {
   const text = input.toLowerCase();
   const activeSounds = { ...recommendation.activeSounds };
   const isStreetScene = includesAny(text, ['街头', '街道', '马路', '城市', '店铺', '路边', 'street', 'road', 'city', 'storefront']);
@@ -82,7 +89,7 @@ function sanitizeRecommendationForInput(input, recommendation) {
   };
 }
 
-async function generateGeminiRecommendation(input, fallback) {
+async function generateGeminiRecommendation(input: string, fallback: any) {
   if (!ai) return null;
 
   const songCatalog = SONGS.map(song => ({
@@ -93,7 +100,8 @@ async function generateGeminiRecommendation(input, fallback) {
     notes: song.notes,
   }));
 
-  const response = await ai.getGenerativeModel({ model: modelName }).generateContent({
+  const generativeModel = ai.getGenerativeModel({ model: modelName });
+  const response = await generativeModel.generateContent({
     contents: [
       {
         role: 'user',
@@ -120,7 +128,7 @@ async function generateGeminiRecommendation(input, fallback) {
   return sanitizeRecommendationForInput(input, normalizeRecommendation(JSON.parse(rawText), fallback));
 }
 
-function withTimeout(promise, timeoutMs) {
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error(`Gemini request timed out after ${timeoutMs}ms`)), timeoutMs);
     promise
@@ -130,7 +138,7 @@ function withTimeout(promise, timeoutMs) {
   });
 }
 
-app.post('/api/scene/recommend', async (req, res) => {
+app.post('/api/scene/recommend', async (req: Request, res: Response) => {
   const input = typeof req.body?.input === 'string' ? req.body.input.trim() : '';
   if (!input) {
     res.status(400).json({ error: 'input is required' });
@@ -138,7 +146,7 @@ app.post('/api/scene/recommend', async (req, res) => {
   }
 
   const fallback = recommendScene(input, SONGS);
-  fallback.videoPrompt = ensureDirectedVideoPrompt(fallback.videoPrompt);
+  (fallback as any).videoPrompt = ensureDirectedVideoPrompt((fallback as any).videoPrompt);
   const sanitizedFallback = sanitizeRecommendationForInput(input, fallback);
 
   try {
@@ -156,7 +164,7 @@ app.post('/api/scene/recommend', async (req, res) => {
   }
 });
 
-app.post('/api/video/generate', async (req, res) => {
+app.post('/api/video/generate', async (req: Request, res: Response) => {
   const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
   const imageUrl = typeof req.body?.imageUrl === 'string' ? req.body.imageUrl.trim() : undefined;
   const model = typeof req.body?.model === 'string' ? req.body.model.trim() : undefined;
@@ -176,7 +184,7 @@ app.post('/api/video/generate', async (req, res) => {
   }
 });
 
-app.get('/api/video/:jobId', async (req, res) => {
+app.get('/api/video/:jobId', async (req: Request, res: Response) => {
   try {
     const job = await videoProvider.getVideo(req.params.jobId);
     res.json(job);

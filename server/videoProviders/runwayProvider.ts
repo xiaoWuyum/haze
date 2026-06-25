@@ -1,5 +1,5 @@
-import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types';
-import { ensureDirectedVideoPrompt } from '../../src/utils/videoPromptDirector';
+import type { VideoGenerationInput, VideoGenerationJob, VideoProvider } from './types.js';
+import { ensureDirectedVideoPrompt } from '../../src/utils/videoPromptDirector.js';
 
 interface RunwayTask {
   id?: string;

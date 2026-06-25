@@ -1,5 +1,5 @@
 import type { Song } from '../types';
-import { buildDirectedVideoPrompt } from './videoPromptDirector';
+import { buildDirectedVideoPrompt } from './videoPromptDirector.js';
 
 export interface SceneRecommendation {
   backgroundId: string;

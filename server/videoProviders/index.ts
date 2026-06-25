@@ -1,7 +1,7 @@
-import { MockVideoProvider } from './mockProvider';
-import { RunwayVideoProvider } from './runwayProvider';
-import { VolcengineSeedanceProvider } from './volcengineSeedanceProvider';
-import type { VideoProvider } from './types';
+import { MockVideoProvider } from './mockProvider.js';
+import { RunwayVideoProvider } from './runwayProvider.js';
+import { VolcengineSeedanceProvider } from './volcengineSeedanceProvider.js';
+import type { VideoProvider } from './types.js';
 
 export function createVideoProvider(): VideoProvider {
   const providerName = (process.env.VIDEO_PROVIDER || 'mock').toLowerCase();
