@@ -76,6 +76,34 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
     mv.tag.toLowerCase().includes(normalizedQuery)
   );
 
+  const renderMediaCover = (url: string, title: string, className: string) => {
+    const isVideo = url.toLowerCase().includes('.mp4') || url.includes('video');
+    
+    if (isVideo) {
+      return (
+        <video
+          src={url}
+          className={`${className} brightness-[0.75]`}
+          muted
+          playsInline
+          onLoadedData={(e) => {
+            // Seek to a very early point to ensure first frame is rendered
+            e.currentTarget.currentTime = 0.001;
+          }}
+        />
+      );
+    }
+    
+    return (
+      <img
+        src={url}
+        alt={title}
+        className={className}
+        referrerPolicy="no-referrer"
+      />
+    );
+  };
+
   const renderSearchResult = (space: Space) => (
     <button
       key={space.id}
@@ -86,12 +114,9 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
       }}
       className="flex items-center gap-3 p-2 rounded-xl bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 cursor-pointer transition-colors text-left"
     >
-      <img
-        src={space.bgImage}
-        alt={space.title}
-        className="w-12 h-12 rounded-lg object-cover shrink-0"
-        referrerPolicy="no-referrer"
-      />
+      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+        {renderMediaCover(space.bgImage, space.title, "w-full h-full object-cover")}
+      </div>
       <div className="min-w-0">
         <h5 className="font-semibold text-white text-sm truncate">{space.title}</h5>
         <span className="text-xs text-zinc-400 truncate block">{space.tag ? `${space.creator} · ${space.tag}` : space.creator}</span>
@@ -107,12 +132,11 @@ export const PlazaScreen: React.FC<PlazaScreenProps> = ({
       onClick={() => onSelectSpace(space)}
       className={`group relative ${compact ? 'h-36' : 'h-48'} rounded-2xl overflow-hidden cursor-pointer shadow-lg border border-white/5 bg-zinc-900 transition-all duration-350 hover:border-white/10 text-left`}
     >
-      <img
-        src={space.bgImage}
-        alt={space.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-[0.75]"
-        referrerPolicy="no-referrer"
-      />
+      {renderMediaCover(
+        space.bgImage, 
+        space.title, 
+        "absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
       <div className="absolute top-3 left-3">
         {(compact || space.tag) && (

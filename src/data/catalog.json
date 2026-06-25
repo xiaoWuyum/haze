@@ -1,0 +1,82 @@
+[
+  {
+    "id": "how_sweet",
+    "title": "How Sweet",
+    "artist": "NewJeans",
+    "genre": "K-Pop / UK Garage",
+    "notes": "轻盈、明亮、带一点复古律动的流行舞曲，适合城市夜景和轻快通勤氛围。",
+    "duration": 219
+  },
+  {
+    "id": "hype_boy",
+    "title": "Hype Boy",
+    "artist": "NewJeans",
+    "genre": "K-Pop / R&B",
+    "notes": "轻快、甜感、适合夜晚通勤和城市漫游的 K-Pop 歌单氛围。",
+    "duration": 179
+  },
+  {
+    "id": "supernatural",
+    "title": "Supernatural",
+    "artist": "NewJeans",
+    "genre": "K-Pop / New Jack Swing",
+    "notes": "复古律动和清爽人声，适合明亮、轻盈的播放场景。",
+    "duration": 191
+  },
+  {
+    "id": "not_like_us",
+    "title": "Not Like Us",
+    "artist": "Kendrick Lamar",
+    "genre": "Hip-Hop",
+    "notes": "节奏感强、夜间城市感强烈，适合开车夜行或深夜街区场景。",
+    "duration": 274
+  },
+  {
+    "id": "billie_jean",
+    "title": "Billie Jean",
+    "artist": "Michael Jackson",
+    "genre": "Pop / R&B",
+    "notes": "经典律动、舞池感与都市夜色结合，适合黑胶复古氛围。",
+    "duration": 294
+  },
+  {
+    "id": "hongdou",
+    "title": "红豆",
+    "artist": "方大同",
+    "genre": "Mandopop / R&B",
+    "notes": "温柔、怀旧、适合雨天咖啡馆和回忆场景。",
+    "duration": 268
+  },
+  {
+    "id": "summer_wind",
+    "title": "夏天的风",
+    "artist": "温岚",
+    "genre": "Mandopop",
+    "notes": "夏日、阳光、街道、海边——明亮的怀旧都市感。",
+    "duration": 256
+  },
+  {
+    "id": "xiaoban",
+    "title": "小半",
+    "artist": "陈粒",
+    "genre": "Indie / Mandopop",
+    "notes": "安静、克制、适合夜色木屋与独处时刻。",
+    "duration": 244
+  },
+  {
+    "id": "airport_1030",
+    "title": "飞机场的10:30",
+    "artist": "陶喆",
+    "genre": "Mandopop / R&B",
+    "notes": "深夜候机楼、慢速的离别与期待感。",
+    "duration": 252
+  },
+  {
+    "id": "ordinary_friends",
+    "title": "普通朋友",
+    "artist": "陶喆",
+    "genre": "Mandopop / R&B",
+    "notes": "温暖、克制、旋律耐听的华语 R&B，适合深夜公寓和下雨的城市窗口。",
+    "duration": 254
+  }
+]

@@ -4,15 +4,15 @@
  */
 
 import { Song, Space, AmbientSound } from './types';
-import nightRoomImage from './picture/夜色留声机.png';
-import rainyCityImage from './picture/城市失眠.png';
-import seasideImage from './picture/潮汐假期.png';
-import concertStageImage from './assets/images/concert_stage_1782081762982.jpg';
-import kyotoHouseImage from './assets/images/kyoto_house_1782081720563.jpg';
-import timesSquareImage from './assets/images/times_square_1782081776604.jpg';
-import beachVideo from './assets/video/beach.mp4';
-import nightVideo from './assets/video/night.mp4';
-import rainyCityVideo from './assets/video/rainycity.mp4';
+import nightRoomImage from './picture/夜色留声机.png?url';
+import rainyCityImage from './picture/城市失眠.png?url';
+import seasideImage from './picture/潮汐假期.png?url';
+import concertStageImage from './assets/images/concert_stage_1782081762982.jpg?url';
+import kyotoHouseImage from './assets/images/kyoto_house_1782081720563.jpg?url';
+import timesSquareImage from './assets/images/times_square_1782081776604.jpg?url';
+import beachVideo from './assets/video/beach.mp4?url';
+import nightVideo from './assets/video/night.mp4?url';
+import rainyCityVideo from './assets/video/rainycity.mp4?url';
 
 export const SONGS: Song[] = [
   {
@@ -122,7 +122,7 @@ export const AMBIENT_SOUNDS: AmbientSound[] = [
   { id: 'waves', name: '海浪', icon: 'Waves', volume: 50, isPlaying: false, synthType: 'waves', audioUrl: '/ambient/海浪.mp3' },
   { id: 'fire', name: '篝火', icon: 'Flame', volume: 50, isPlaying: false, synthType: 'fire', audioUrl: '/ambient/篝火.mp3' },
   { id: 'crickets', name: '虫鸣', icon: 'Bug', volume: 40, isPlaying: false, synthType: 'crickets', audioUrl: '/ambient/虫鸣.mp3' },
-  { id: 'space', name: '夜晚', icon: 'Moon', volume: 60, isPlaying: false, synthType: 'space', audioUrl: '/ambient/夜晚.flac' },
+  { id: 'space', name: '夜晚', icon: 'Moon', volume: 60, isPlaying: false, synthType: 'space', audioUrl: '/ambient/夜晚.mp3' },
   { id: 'wind', name: '风声', icon: 'Wind', volume: 40, isPlaying: false, synthType: 'wind' },
   { id: 'vinyl', name: '黑胶', icon: 'Disc', volume: 30, isPlaying: false, synthType: 'vinyl' },
 ];

@@ -1,4 +1,4 @@
-﻿# Drift
+# Drift
 
 A Vite + React + TypeScript ambient music prototype.
 
@@ -94,7 +94,7 @@ public/ambient/雨声.mp3
 public/ambient/海浪.mp3
 public/ambient/篝火.mp3
 public/ambient/虫鸣.mp3
-public/ambient/夜晚.flac
+public/ambient/夜晚.mp3
 ```
 
 `wind` and `vinyl` still use the built-in synthesized effects until matching audio files are added.

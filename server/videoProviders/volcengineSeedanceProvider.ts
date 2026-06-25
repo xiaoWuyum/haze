@@ -101,7 +101,7 @@ export class VolcengineSeedanceProvider implements VideoProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: this.model,
+        model: input.model || this.model,
         content,
       }),
     });

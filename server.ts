@@ -2,12 +2,14 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { GoogleGenAI, Type } from '@google/genai';
-import { SONGS } from './src/data';
 import { recommendScene } from './src/utils/sceneRecommender';
 import type { SceneRecommendation } from './src/utils/sceneRecommender';
 import { ensureDirectedVideoPrompt } from './src/utils/videoPromptDirector';
 import { createVideoProvider } from './server/videoProviders';
+
+const SONGS = JSON.parse(readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'src/data/catalog.json'), 'utf8'));
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -180,13 +182,14 @@ app.post('/api/scene/recommend', async (req, res) => {
 app.post('/api/video/generate', async (req, res) => {
   const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
   const imageUrl = typeof req.body?.imageUrl === 'string' ? req.body.imageUrl.trim() : undefined;
+  const model = typeof req.body?.model === 'string' ? req.body.model.trim() : undefined;
   if (!prompt) {
     res.status(400).json({ error: 'prompt is required' });
     return;
   }
 
   try {
-    const job = await videoProvider.createVideo({ prompt, imageUrl });
+    const job = await videoProvider.createVideo({ prompt, imageUrl, model });
     res.json(job);
   } catch (error) {
     console.error('Video generation request failed.', error);

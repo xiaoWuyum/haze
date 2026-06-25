@@ -30,7 +30,7 @@ interface PlayScreenProps {
   onClose: () => void;
 }
 
-type PanelTab = 'songs' | 'ambience';
+type PanelTab = 'songs' | 'ambience' | 'spaces';
 
 const MUSIC_EFFECTS = [
   { id: 'surround', label: '环绕', icon: 'Orbit' },
@@ -322,6 +322,7 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                   {[
                     ['songs', '歌曲', 'ListMusic'],
                     ['ambience', '环境音', 'Sliders'],
+                    ['spaces', '空间', 'Map'],
                   ].map(([tab, label, icon]) => (
                     <button
                       key={tab}
@@ -480,6 +481,33 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {activeTab === 'spaces' && (
+                  <div className="flex flex-col gap-2">
+                    {spaces.map(sp => {
+                      const current = sp.id === space.id;
+                      return (
+                        <button
+                          key={sp.id}
+                          type="button"
+                          onClick={() => onSelectSpace(sp)}
+                          className={`flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
+                            current
+                              ? 'bg-purple-400/12 border-purple-400/30'
+                              : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          <img src={sp.bgImage} alt={sp.title} className="w-12 h-12 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
+                          <div className="flex-1 min-w-0">
+                            <h5 className={`text-xs font-bold truncate ${current ? 'text-purple-300' : 'text-white'}`}>{sp.title}</h5>
+                            <p className="text-[10px] text-zinc-500 truncate mt-0.5">{sp.tag ? `${sp.tag} · ${sp.creator}` : sp.creator}</p>
+                          </div>
+                          {current && <LucideIcon name="Check" size={14} className="text-purple-300 shrink-0" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 

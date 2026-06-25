@@ -1,9 +1,9 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Space, Song, AmbientSound, HistoryRecord } from './types';
 import { SONGS, AMBIENT_SOUNDS, DEFAULT_SPACES, DEFAULT_MVS } from './data';
 import { AudioEngine } from './utils/audioEngine';
@@ -39,6 +39,7 @@ export default function App() {
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [navLens, setNavLens] = useState({ x: 0, y: 0, visible: false });
   const [playImmersive, setPlayImmersive] = useState(false);
+  const handleNextSongRef = useRef<() => void>(() => {});
   
   // Analyser frequencies
   const [freqData, setFreqData] = useState<number[]>([]);
@@ -67,8 +68,12 @@ export default function App() {
     AudioEngine.onBeatCallback = (step, data) => {
       setFreqData(data);
     };
+    AudioEngine.onSongEndCallback = () => {
+      handleNextSongRef.current();
+    };
     return () => {
       AudioEngine.onBeatCallback = null;
+      AudioEngine.onSongEndCallback = null;
     };
   }, []);
 
@@ -260,14 +265,17 @@ export default function App() {
     }
   };
 
-  const handleNextSong = () => {
+  const handleNextSong = useCallback(() => {
     const currentIdx = SONGS.findIndex(song => song.id === activeSongId);
     const nextSong = SONGS[(currentIdx + 1 + SONGS.length) % SONGS.length];
     setActiveSongId(nextSong.id);
-    if (isPlaying) {
-      AudioEngine.playSong(nextSong.id, nextSong.audioUrl);
-    }
-  };
+    AudioEngine.playSong(nextSong.id, nextSong.audioUrl);
+  }, [activeSongId]);
+
+  // Update the ref whenever handleNextSong changes
+  useEffect(() => {
+    handleNextSongRef.current = handleNextSong;
+  }, [handleNextSong]);
 
   const handleGenerateVideo = async (prompt: string) => {
     setIsGeneratingVideo(true);
@@ -275,7 +283,10 @@ export default function App() {
     setGeneratedVideoUrl('');
 
     try {
-      const job = await requestVideoGeneration({ prompt });
+      const job = await requestVideoGeneration({ 
+        prompt,
+        model: 'doubao-seedance-1-0-pro-fast-251015'
+      });
       setVideoJob(job);
 
       if (job.status === 'completed' && job.videoUrl) {
@@ -306,6 +317,49 @@ export default function App() {
     setGeneratedVideoUrl('');
     setVideoError('');
     setIsGeneratingVideo(false);
+  };
+
+  const buildGeneratedSpace = (title?: string, description?: string): Space => ({
+    id: `cinematic_${Date.now()}`,
+    title: title || 'AI 渲染空间',
+    tag: 'AI 渲染',
+    creator: 'You',
+    creatorAvatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=cinema',
+    bgImage: generatedVideoUrl,
+    videoUrl: generatedVideoUrl,
+    ambientSounds: [
+      { soundId: 'wind', volume: 45 },
+      { soundId: 'space', volume: 30 },
+    ],
+    defaultSongId: SONGS[0].id,
+    description: description || '由 AI 视频管线实时渲染的沉浸循环空间。',
+    type: 'space',
+  });
+
+  const handlePublishGeneratedVideo = (title: string, description: string) => {
+    if (!generatedVideoUrl) return;
+    const newSpace = buildGeneratedSpace(title, description);
+    const currentList = readJson<Space[]>('custom_created_spaces', []);
+    const updated = [...currentList, newSpace];
+    writeJson('custom_created_spaces', updated);
+    setSpaces([...DEFAULT_SPACES, ...updated]);
+    setActiveSpace(newSpace);
+    clearVideoGeneration();
+    setActiveTab('plaza');
+  };
+
+  const handlePlayGeneratedVideo = (title: string, description: string) => {
+    if (!generatedVideoUrl) return;
+    const newSpace = buildGeneratedSpace(title, description);
+    setActiveSpace(newSpace);
+    setActiveSongId(newSpace.defaultSongId);
+    syncSpaceAtmosphere(newSpace);
+    clearVideoGeneration();
+    setActiveTab('play');
+  };
+
+  const handleDismissVideoOverlay = () => {
+    clearVideoGeneration();
   };
 
   // Creation callback
@@ -401,6 +455,9 @@ export default function App() {
               onClearVideoGeneration={clearVideoGeneration}
               onCreateSpace={handleCreateSpace}
               onOpenProfile={() => setActiveTab('profile')}
+              onPlayGeneratedVideo={handlePlayGeneratedVideo}
+              onPublishGeneratedVideo={handlePublishGeneratedVideo}
+              onDismissVideoOverlay={handleDismissVideoOverlay}
             />
           </div>
 

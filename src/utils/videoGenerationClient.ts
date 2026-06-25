@@ -11,6 +11,7 @@ export interface VideoGenerationJob {
 export interface VideoGenerationRequest {
   prompt: string;
   imageUrl?: string;
+  model?: string;
 }
 
 export async function requestVideoGeneration(input: VideoGenerationRequest): Promise<VideoGenerationJob> {

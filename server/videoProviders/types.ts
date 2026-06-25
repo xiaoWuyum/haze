@@ -3,6 +3,7 @@ export type VideoGenerationStatus = 'queued' | 'generating' | 'completed' | 'fai
 export interface VideoGenerationInput {
   prompt: string;
   imageUrl?: string;
+  model?: string;
 }
 
 export interface VideoGenerationJob {

@@ -48,14 +48,45 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const listeningSecs = readNumber('user_listening_seconds', 0);
     const listeningMins = Math.max(44, Math.floor(listeningSecs / 60)); // fallback minimum test minutes
     
-    const customCount = spaces.filter(s => s.id.startsWith('custom_')).length;
+    const userSpacesCount = spaces.filter(s => 
+      s.id.startsWith('custom_') || 
+      s.id.startsWith('world_') || 
+      s.id.startsWith('cinematic_')
+    ).length;
 
     setStats({
       listeningMinutes: listeningMins,
       exploredSpacesCount: new Set([ ...storedHistory.map(h => h.spaceId), 'cyberpunk_apartment', 'kyoto_house', 'cosmic_drift', 'seaside_cottage' ]).size,
-      createdSpacesCount: customCount
+      createdSpacesCount: userSpacesCount
     });
   }, [spaces]);
+
+  const renderMediaCover = (url: string, title: string, className: string) => {
+    const isVideo = url.toLowerCase().includes('.mp4') || url.includes('video');
+    
+    if (isVideo) {
+      return (
+        <video
+          src={url}
+          className={`${className} brightness-[0.75]`}
+          muted
+          playsInline
+          onLoadedData={(e) => {
+            e.currentTarget.currentTime = 0.001;
+          }}
+        />
+      );
+    }
+    
+    return (
+      <img
+        src={url}
+        alt={title}
+        className={className}
+        referrerPolicy="no-referrer"
+      />
+    );
+  };
 
   const handleRemoveFavorite = (e: React.MouseEvent, spaceId: string) => {
     e.stopPropagation();
@@ -80,10 +111,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  const customCreatedSpaces = spaces.filter(s => s.id.startsWith('custom_'));
+  const customCreatedSpaces = spaces.filter(s => 
+    s.id.startsWith('custom_') || 
+    s.id.startsWith('world_') || 
+    s.id.startsWith('cinematic_')
+  );
 
   return (
-    <div className="w-full px-6 pt-8 pb-32 max-w-md mx-auto flex flex-col gap-6">
+    <div className="w-full px-6 pt-8 pb-44 max-w-md mx-auto flex flex-col gap-6">
       
       {/* 1. Profile card layout */}
       <div className="flex items-center gap-4 bg-zinc-900/40 p-5 rounded-2xl border border-white/5 backdrop-blur-md">
@@ -143,12 +178,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 className="group flex items-center justify-between p-2.5 bg-zinc-900/20 hover:bg-zinc-900/50 rounded-xl border border-white/5 cursor-pointer transition-all"
               >
                 <div className="flex items-center gap-3 truncate">
-                  <img 
-                    src={space.bgImage} 
-                    alt={space.title} 
-                    className="w-10 h-10 rounded-lg object-cover shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
+                  <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+                    {renderMediaCover(space.bgImage, space.title, "w-full h-full object-cover")}
+                  </div>
                   <div className="truncate text-left">
                     <h4 className="font-semibold text-white text-xs leading-none">{space.title}</h4>
                     <span className="text-[10px] text-zinc-500 mt-1 block font-mono">{space.tag ? `${space.creator} · ${space.tag}` : space.creator}</span>
@@ -184,7 +216,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 className="flex items-center justify-between p-2.5 bg-zinc-900/35 hover:bg-zinc-900/60 rounded-xl border border-white/5 cursor-pointer transition-colors"
               >
                 <div className="flex items-center gap-3 truncate">
-                  <img src={space.bgImage} alt={space.title} className="w-10 h-10 rounded-lg object-cover shrink-0" referrerPolicy="no-referrer" />
+                  <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+                    {renderMediaCover(space.bgImage, space.title, "w-full h-full object-cover")}
+                  </div>
                   <div className="truncate text-left">
                     <h5 className="font-semibold text-white text-xs">{space.title}</h5>
                     {space.tag && (

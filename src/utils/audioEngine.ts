@@ -40,6 +40,7 @@ export class AudioEngine {
   
   // Callback for beat synchronization (for UI visualizers)
   public static onBeatCallback: ((step: number, freqData: number[]) => void) | null = null;
+  public static onSongEndCallback: (() => void) | null = null;
   private static analyserNode: AnalyserNode | null = null;
   private static animationFrameId: number | null = null;
 
@@ -777,11 +778,14 @@ export class AudioEngine {
 
     if (!this.audioElement) {
       this.audioElement = new Audio();
-      this.audioElement.loop = true;
+      this.audioElement.loop = false;
       this.audioElement.preload = 'auto';
       this.audioElement.crossOrigin = 'anonymous';
       this.audioElementSource = this.ctx.createMediaElementSource(this.audioElement);
       this.audioElementSource.connect(this.songGain);
+      this.audioElement.addEventListener('ended', () => {
+        this.onSongEndCallback?.();
+      });
     }
 
     const nextSrc = new URL(audioUrl, window.location.href).href;
