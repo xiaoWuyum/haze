@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 
 import frontVideoUrl from '../assets/video/front.mp4';
 import background2Url from '../picture/background2.jpg';
 import mp3Url from '../picture/mp3.png';
 import tvUrl from '../picture/tv.png';
+import GradientShader from './GradientShader';
+
 
 interface HomeScreenProps {
   onOpenPlaza: () => void;
@@ -22,6 +24,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenPlay,
   onOpenCreate,
 }: HomeScreenProps) => {
+  const [showGradientShader, setShowGradientShader] = useState(false);
+
+  const handleOpenPlaza = () => {
+    setShowGradientShader(true);
+    setTimeout(() => {
+      setShowGradientShader(false);
+      onOpenPlaza();
+    }, 1000);
+  };
+
+  const handleOpenPlay = () => {
+    setShowGradientShader(true);
+    setTimeout(() => {
+      setShowGradientShader(false);
+      onOpenPlay();
+    }, 1000);
+  };
   return (
     <div className="home-screen">
       <video
@@ -52,7 +71,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       <motion.button
         type="button"
-        onClick={onOpenPlaza}
+        onClick={handleOpenPlaza}
         whileTap={{ scale: 1.15 }}
         className="home-tv"
         aria-label="进入广场"
@@ -61,13 +80,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           src={tvUrl}
           alt=""
           aria-hidden="true"
-          className="home-float home-float-1 home-tv-img drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
+          className="home-float home-float-1 home-tv-img drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]"
         />
       </motion.button>
 
       <motion.button
         type="button"
-        onClick={onOpenPlay}
+        onClick={handleOpenPlay}
         whileTap={{ scale: 1.15 }}
         className="home-mp3"
         aria-label="进入播放列表"
@@ -76,30 +95,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           src={mp3Url}
           alt=""
           aria-hidden="true"
-          className="home-float home-float-2 home-mp3-img drop-shadow-[0_0_20px_rgba(255,255,255,0.7)]"
+          className="home-float home-float-2 home-mp3-img drop-shadow-[0_0_30px_rgba(255,255,255,0.9)]"
         />
       </motion.button>
 
-      {/* <motion.img
-        src={heart2Url}
-        alt=""
-        aria-hidden="true"
-        className="home-heart home-float home-float-3 home-heart-img"
-      />
-
-      <motion.button
-        type="button"
-        onClick={onOpenCreate}
-        className="home-screen-launch"
-        aria-label="进入创建"
-      >
-        <motion.img
-          src={screenUrl}
-          alt=""
-          aria-hidden="true"
-          className="home-screen-launch-img"
-        />
-      </motion.button> */}
+      {showGradientShader && (
+        <div className="absolute inset-0 z-50">
+          <GradientShader text="正在感知这首歌的空间…" />
+        </div>
+      )}
     </div>
   );
 };
