@@ -45,7 +45,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <h1 className="text-4xl sm:text-3xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] tracking-wider" style={{ fontFamily: "'HYPixel', monospace", textShadow: '4px 4px 0px #000, -2px -2px 0 #ff6b9d' }}>
           觅镜
         </h1>
-        <p className="mt-3 text-sm sm:text-base text-white/80 tracking-[0.3em]" style={{ fontFamily: "'HYPixel', monospace", textShadow: '2px 2px 0px #000' }}>
+        <p className="mt-3 text-sm sm:text-base text-white/80 tracking-[0.3em] " style={{ fontFamily: "'HYPixel', monospace", textShadow: '2px 2px 0px #000' }}>
           在某个频率里，等你
         </p>
       </motion.div>
@@ -53,7 +53,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <motion.button
         type="button"
         onClick={onOpenPlaza}
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 1.15 }}
         className="home-tv"
         aria-label="进入广场"
       >
@@ -68,7 +68,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <motion.button
         type="button"
         onClick={onOpenPlay}
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 1.15 }}
         className="home-mp3"
         aria-label="进入播放列表"
       >

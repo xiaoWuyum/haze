@@ -201,7 +201,7 @@
 }
 
 .home-tv {
-  top: 15%;
+  top: 20%;
   left: 8%;
   width: clamp(128px, 40vw, 200px);
 }
