@@ -7,10 +7,8 @@ import React from 'react';
 import { motion } from 'motion/react';
 
 import frontVideoUrl from '../assets/video/front.mp4';
-import background2Url from '../picture/background2.png';
-import heart2Url from '../picture/heart2.png';
+import background2Url from '../picture/background2.jpg';
 import mp3Url from '../picture/mp3.png';
-import screenUrl from '../picture/screen.png';
 import tvUrl from '../picture/tv.png';
 
 interface HomeScreenProps {
@@ -67,7 +65,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         />
       </motion.button>
 
-      <motion.img
+      {/* <motion.img
         src={heart2Url}
         alt=""
         aria-hidden="true"
@@ -86,7 +84,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           aria-hidden="true"
           className="home-screen-launch-img"
         />
-      </motion.button>
+      </motion.button> */}
     </div>
   );
 };
