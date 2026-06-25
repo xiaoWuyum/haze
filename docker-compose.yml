@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # 在这里添加你的环境变量，例如：
+      GEMINI_API_KEY="AIzaSyDmX7ukfN0aLm3f0LasM-_CW3KoSg8sMeA"
+      GEMINI_TIMEOUT_MS="15000"
+      APP_URL="MY_APP_URL"
+
+
+      VIDEO_PROVIDER="volcengine"
+      VOLCENGINE_API_KEY="ark-ba43bdef-fba4-4a02-8734-b92bd05c7bf9-410b9"
+      VOLCENGINE_VIDEO_MODEL="doubao-seedance-1-0-pro-fast-251015"
+      VOLCENGINE_VIDEO_DURATION="5"
+      VOLCENGINE_CAMERA_FIXED="true"
+      VOLCENGINE_WATERMARK="false"
+    # volumes:
+      # 如果你需要持久化数据，可以在这里添加卷映射
+      # - ./data:/app/data
