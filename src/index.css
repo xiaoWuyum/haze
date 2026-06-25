@@ -201,15 +201,17 @@
 }
 
 .home-tv {
-  top: 20%;
+  top: 30%;
   left: 8%;
   width: clamp(128px, 40vw, 200px);
+  transform: scale(1.2);
 }
 
 .home-mp3 {
-  top: 34%;
+  top: 44%;
   right: 4%;
   width: clamp(156px, 51vw, 241px);
+  transform: scale(1.2);
 }
 
 .home-heart {

@@ -319,7 +319,7 @@ export default function App() {
     setIsGeneratingVideo(false);
   };
 
-  const buildGeneratedSpace = (title?: string, description?: string): Space => ({
+  const buildGeneratedSpace = (title?: string, description?: string, songId?: string): Space => ({
     id: `cinematic_${Date.now()}`,
     title: title || 'AI 渲染空间',
     tag: 'AI 渲染',
@@ -331,14 +331,14 @@ export default function App() {
       { soundId: 'wind', volume: 45 },
       { soundId: 'space', volume: 30 },
     ],
-    defaultSongId: SONGS[0].id,
+    defaultSongId: songId || SONGS[0].id,
     description: description || '由 AI 视频管线实时渲染的沉浸循环空间。',
     type: 'space',
   });
 
-  const handlePublishGeneratedVideo = (title: string, description: string) => {
+  const handlePublishGeneratedVideo = (title: string, description: string, songId: string) => {
     if (!generatedVideoUrl) return;
-    const newSpace = buildGeneratedSpace(title, description);
+    const newSpace = buildGeneratedSpace(title, description, songId);
     const currentList = readJson<Space[]>('custom_created_spaces', []);
     const updated = [...currentList, newSpace];
     writeJson('custom_created_spaces', updated);
@@ -493,7 +493,7 @@ export default function App() {
               onNextSong={handleNextSong}
             />
           )}
-          {!(activeTab === 'play' && playImmersive) && (
+          {activeTab !== 'home' && !(activeTab === 'play' && playImmersive) && (
           <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-[70] px-5 pb-5 pt-7 bg-gradient-to-t from-black/20 via-black/5 to-transparent">
             <div
               style={{ contentVisibility: 'auto' }}

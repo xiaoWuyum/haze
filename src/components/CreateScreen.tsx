@@ -22,8 +22,8 @@ interface CreateScreenProps {
   onClearVideoGeneration: () => void;
   onCreateSpace: (space: Space) => void;
   onOpenProfile: () => void;
-  onPlayGeneratedVideo: (title: string, description: string) => void;
-  onPublishGeneratedVideo: (title: string, description: string) => void;
+  onPlayGeneratedVideo: (title: string, description: string, songId: string) => void;
+  onPublishGeneratedVideo: (title: string, description: string, songId: string) => void;
   onDismissVideoOverlay: () => void;
 }
 
@@ -123,9 +123,12 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
   const [selectedTag, setSelectedTag] = useState('');
   const [editedScene, setEditedScene] = useState('');
   const [editedTitle, setEditedTitle] = useState('');
+  const [selectedSongId, setSelectedSongId] = useState(songs[0]?.id || '');
+  const [isSongDropdownOpen, setIsSongDropdownOpen] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
   const timersRef = useRef<number[]>([]);
   const blueprint = useMemo(() => makeBlueprint(signal), [signal]);
+  const selectedSong = songs.find(s => s.id === selectedSongId) || songs[0];
 
   // Keep the editable scene text in sync when the blueprint regenerates
   useEffect(() => {
@@ -220,12 +223,12 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
   };
 
   const handlePublishAndReset = (title: string, description: string) => {
-    onPublishGeneratedVideo(title, description);
+    onPublishGeneratedVideo(title, description, selectedSongId);
     reset();
   };
 
   const handlePlayAndReset = (title: string, description: string) => {
-    onPlayGeneratedVideo(title, description);
+    onPlayGeneratedVideo(title, description, selectedSongId);
     reset();
   };
 
@@ -245,7 +248,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
         { soundId: spaceSound.id, volume: 72 },
         ...(windSound ? [{ soundId: windSound.id, volume: 36 }] : []),
       ],
-      defaultSongId: song.id,
+      defaultSongId: selectedSongId,
       description: [
         blueprint.subtitle,
         `气候：${blueprint.climate}`,
@@ -474,22 +477,50 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="h-12 rounded-[8px] border border-white/12 bg-white/[0.04] text-xs font-bold uppercase tracking-[0.18em] text-white/76"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={saveWorld}
-                  disabled={saved}
-                  className="h-12 rounded-[8px] border border-violet-100/32 bg-violet-100 text-xs font-bold uppercase tracking-[0.18em] text-black disabled:bg-emerald-200"
-                >
-                  {saved ? 'Saved' : 'Save'}
-                </button>
+              <div className="rounded-[8px] border border-violet-100/12 bg-violet-100/[0.045] p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.34em] text-violet-100/65">
+                    Default Song · 默认歌曲
+                  </p>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsSongDropdownOpen(!isSongDropdownOpen)}
+                    className="flex w-full items-center justify-between rounded-md border border-white/20 bg-black/30 p-2 text-sm text-white outline-none transition-colors hover:border-white/40"
+                  >
+                    <span>{selectedSong.title} - {selectedSong.artist}</span>
+                    <LucideIcon name="ChevronDown" size={16} className={`transition-transform ${isSongDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isSongDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-0 right-0 top-full z-10 mt-2 max-h-60 overflow-y-auto rounded-md border border-white/20 bg-black/70 backdrop-blur-md shadow-lg"
+                      >
+                        <ul className="py-1">
+                          {songs.map(song => (
+                            <li key={song.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSongId(song.id);
+                                  setIsSongDropdownOpen(false);
+                                }}
+                                className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-violet-500/20"
+                              >
+                                {song.title} - {song.artist}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               {/* Generate Video Button at bottom */}
