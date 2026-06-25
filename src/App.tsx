@@ -484,11 +484,11 @@ export default function App() {
               />
             )}
           </AnimatePresence>
-          {activeTab !== 'play' && (
+          {(activeTab !== 'play' || playImmersive) && (
             <NowPlayingBanner
               song={SONGS.find(s => s.id === activeSongId) || SONGS[0]}
               isPlaying={isPlaying}
-              variant={activeTab === 'home' ? 'home' : 'default'}
+              variant={activeTab === 'home' ? 'home' : playImmersive ? 'playImmersive' : 'default'}
               onOpenPlayer={() => setActiveTab('play')}
               onTogglePlay={handleTogglePlay}
               onNextSong={handleNextSong}

@@ -95,6 +95,8 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
   const [favorite, setFavorite] = useState(false);
   const [showChrome, setShowChrome] = useState(true);
   const [immersiveMode, setImmersiveMode] = useState(false);
+  const [focusStartedAt, setFocusStartedAt] = useState<number | null>(null);
+  const [focusElapsedSeconds, setFocusElapsedSeconds] = useState(0);
   const [activeEffects, setActiveEffects] = useState<string[]>([]);
   const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const playerBarSwipeStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -128,14 +130,37 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     };
   }, [immersiveMode, onImmersiveChange]);
 
+  useEffect(() => {
+    if (!immersiveMode || !focusStartedAt) return;
+
+    const updateElapsed = () => {
+      setFocusElapsedSeconds(Math.max(0, Math.floor((Date.now() - focusStartedAt) / 1000)));
+    };
+    updateElapsed();
+    const interval = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(interval);
+  }, [focusStartedAt, immersiveMode]);
+
   const revealChrome = () => {
     if (immersiveMode) {
       setImmersiveMode(false);
+      setFocusStartedAt(null);
+      setFocusElapsedSeconds(0);
       setShowChrome(true);
       return;
     }
 
     setShowChrome(true);
+  };
+
+  const formatFocusTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const switchSpaceByOffset = (offset: number) => {
@@ -200,6 +225,13 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
     const isBarSwipe = Math.abs(dx) >= 72 && Math.abs(dx) > Math.abs(dy) * 1.2 && elapsed <= 900;
     if (!isBarSwipe) return;
 
+    setPanelOpen(false);
+    setImmersiveMode(true);
+  };
+
+  const handleStartFocusMode = () => {
+    setFocusStartedAt(Date.now());
+    setFocusElapsedSeconds(0);
     setPanelOpen(false);
     setImmersiveMode(true);
   };
@@ -302,6 +334,24 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
               >
                 <LucideIcon name="Heart" size={17} />
               </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {immersiveMode && focusStartedAt && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-9 left-0 right-0 z-30 flex justify-center pointer-events-none"
+          >
+            <div
+              className="px-3 py-1.5 border border-white/15 bg-black/20 text-[11px] text-cyan-100 tracking-normal shadow-[0_0_24px_rgba(103,232,249,0.16)]"
+              style={{ fontFamily: 'HYPixel, monospace' }}
+            >
+              已专注 {formatFocusTime(focusElapsedSeconds)}
             </div>
           </motion.div>
         )}
@@ -567,14 +617,33 @@ export const PlayScreen: React.FC<PlayScreenProps> = ({
             playerBarSwipeStartRef.current = null;
           }}
         >
-          <button
-            type="button"
-            onClick={() => setPanelOpen(prev => !prev)}
-            className="w-full h-7 flex items-center justify-center text-white/50 hover:text-white/80"
-            title={panelOpen ? '收起控制面板' : '展开控制面板'}
-          >
-            <LucideIcon name={panelOpen ? 'ChevronDown' : 'ChevronUp'} size={16} />
-          </button>
+          <div className="grid h-7 grid-cols-3 border-b border-white/10">
+            <button
+              type="button"
+              onClick={() => switchSpaceByOffset(1)}
+              className="flex items-center justify-center text-white/50 hover:text-white/85 disabled:text-white/20 disabled:hover:text-white/20"
+              title="匹配其他空间"
+              disabled={spaces.length < 2}
+            >
+              <LucideIcon name="Shuffle" size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPanelOpen(prev => !prev)}
+              className="flex items-center justify-center border-x border-white/10 text-white/50 hover:text-white/85"
+              title={panelOpen ? '收起 banner' : '展开 banner'}
+            >
+              <LucideIcon name={panelOpen ? 'ChevronDown' : 'ChevronUp'} size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={handleStartFocusMode}
+              className="flex items-center justify-center text-white/50 hover:text-cyan-100"
+              title="开启专注模式"
+            >
+              <LucideIcon name="Focus" size={14} />
+            </button>
+          </div>
 
           <div className="px-4 pb-3">
             <div className="h-8 mb-1  overflow-hidden">

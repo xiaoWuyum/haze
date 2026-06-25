@@ -6,7 +6,7 @@ import { LucideIcon } from './LucideIcon';
 interface NowPlayingBannerProps {
   song: Song;
   isPlaying: boolean;
-  variant?: 'default' | 'home';
+  variant?: 'default' | 'home' | 'playImmersive';
   onOpenPlayer: () => void;
   onTogglePlay: () => void;
   onNextSong: () => void;
@@ -20,7 +20,7 @@ export const NowPlayingBanner: React.FC<NowPlayingBannerProps> = ({
   onTogglePlay,
   onNextSong,
 }) => {
-  const bottomClass = variant === 'home' ? 'bottom-6' : 'bottom-[86px]';
+  const bottomClass = variant === 'home' || variant === 'playImmersive' ? 'bottom-6' : 'bottom-[86px]';
 
   return (
     <div className={`fixed ${bottomClass} left-0 right-0 max-w-md mx-auto z-40 px-5`}>
